@@ -55,8 +55,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip3 install pyinstaller flask pdfplumber pypdf python-docx openpyxl
-          pip3 install reportlab python-pptx extract-msg pillow pytesseract pdf2image
+          pip install pyinstaller flask pdfplumber pypdf python-docx openpyxl
+          pip install reportlab python-pptx extract-msg pillow pytesseract pdf2image
 
       - name: Install create-dmg
         run: brew install create-dmg
