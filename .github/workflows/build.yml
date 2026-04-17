@@ -62,7 +62,7 @@ jobs:
         run: brew install create-dmg
 
       - name: Build with PyInstaller
-        run: python3 -m pyinstaller universal_search.spec --noconfirm
+        run: pyinstaller universal_search.spec --noconfirm
 
       - name: Package into DMG
         run: |
