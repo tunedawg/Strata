@@ -1198,19 +1198,24 @@ def _color_is_black(c):
 
 
 def _color_is_white(c):
-    """Return True if color value represents white/near-white."""
+    """Return True if color value represents white/near-white.
+    Tightened to avoid false positives on light-colored speech bubbles
+    (e.g. light green RGB ~0.93,0.99,0.92) in screenshot-based PDFs.
+    """
     if c is None:
         return False
     try:
         if isinstance(c, (int, float)):
-            return float(c) > 0.90
+            return float(c) > 0.97
         if isinstance(c, (list, tuple)):
             if len(c) == 1:
-                return float(c[0]) > 0.90
-            if len(c) == 3:    # RGB 0–1
-                return all(float(v) > 0.90 for v in c)
+                return float(c[0]) > 0.97
+            if len(c) == 3:    # RGB 0–1 — all channels must be near 1.0
+                vals = [float(v) for v in c]
+                # Must be near-white: all high AND low variance (no tints)
+                return all(v > 0.95 for v in vals) and (max(vals) - min(vals)) < 0.04
             if len(c) == 4:    # CMYK: (0,0,0,0) = white
-                return all(float(v) < 0.08 for v in c)
+                return all(float(v) < 0.04 for v in c)
     except Exception:
         pass
     return False
@@ -1287,35 +1292,11 @@ def detect_redactions_in_pdf(path):
                                 'location': f"Page {page_num} — x:{x0:.0f}–{x1:.0f}, y:{top:.0f}–{bot:.0f}",
                                 'details': f"{w:.0f}×{h:.0f}pt black-filled rectangle",
                             })
-                        elif _color_is_white(fill_color) and w > 40 and h > 6:
-                            # White box — potential whiteout; skip full-page backgrounds
-                            if w / pw > 0.85 and h / ph > 0.85:
-                                continue
-                            findings.append({
-                                'page': page_num,
-                                'type': 'White Box (Whiteout)',
-                                'location': f"Page {page_num} — x:{x0:.0f}–{x1:.0f}, y:{top:.0f}–{bot:.0f}",
-                                'details': f"{w:.0f}×{h:.0f}pt white-filled rectangle (verify)",
-                            })
+                        # White box / whiteout detection removed — too many false positives
                     except Exception:
                         pass
 
-                # --- white-ink text ---
-                white_chars = []
-                try:
-                    for ch in (page.chars or []):
-                        if _color_is_white(ch.get('non_stroking_color')):
-                            white_chars.append(ch.get('text', ''))
-                except Exception:
-                    pass
-                if white_chars:
-                    sample = ''.join(white_chars[:30]).replace('\n', ' ')
-                    findings.append({
-                        'page': page_num,
-                        'type': 'White Text (Ink Color)',
-                        'location': f"Page {page_num}",
-                        'details': f"{len(white_chars)} char(s) rendered in white — e.g. '{sample}'",
-                    })
+                # White text detection removed — too many false positives
     except Exception:
         pass
 
@@ -1422,6 +1403,13 @@ def run_redaction_scan(dataset_name):
             findings = (detect_redactions_in_pdf(str(fpath))
                         if ext == '.pdf'
                         else detect_redactions_in_docx(str(fpath)))
+
+            # Deduplicate: when a black bar and white box share the same location
+            # (black bar drawn over white box), keep only the black bar
+            if findings:
+                black_locs = {f["location"] for f in findings if f["type"] == "Black Redaction Bar"}
+                findings = [f for f in findings
+                            if not (f["type"] == "White Box (Whiteout)" and f["location"] in black_locs)]
 
             if findings:
                 pages      = sorted({f['page'] for f in findings if f.get('page')})
