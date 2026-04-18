@@ -159,6 +159,7 @@ tr:hover td { background: rgba(255,255,255,0.015); }
     <a href="/" class="nav-link">📇 Index</a>
     <a href="/production" class="nav-link">📦 Production</a>
     <a href="/redactions" class="nav-link active">◼ Redactions</a>
+    <a href="/log" class="nav-link">📋 Log</a>
   </nav>
 </header>
 
@@ -278,6 +279,7 @@ tr:hover td { background: rgba(255,255,255,0.015); }
 ───────────────────────────────────────── */
 let pollTimer = null;
 let scanResults = null;
+let scanDataset  = "";
 
 /* ─────────────────────────────────────────
    Init
@@ -319,6 +321,7 @@ function onDatasetChange() {
 async function startScan() {
   const ds = document.getElementById('dataset-select').value;
   if (!ds) return;
+  scanDataset = ds;
 
   // Reset UI
   scanResults = null;
@@ -453,7 +456,10 @@ function buildDocCard(doc) {
   card.innerHTML = `
     <div class="doc-card-header" onclick="toggleCard(this)">
       <span class="doc-icon">${icon}</span>
-      <span class="doc-name" title="${esc(doc.filepath || doc.filename)}">${esc(doc.filename)}</span>
+      ${scanDataset && doc.filename.toLowerCase().endsWith('.pdf')
+        ? `<a class="doc-name" href="/preview/${encodeURIComponent(scanDataset)}/${(doc.filename).split('/').map(encodeURIComponent).join('/')}" target="_blank" title="Open ${esc(doc.filename)}" style="text-decoration:none;color:var(--text)">${esc(doc.filename)}</a>`
+        : `<span class="doc-name" title="${esc(doc.filepath || doc.filename)}">${esc(doc.filename)}</span>`
+      }
       <span class="finding-badge ${badgeClass}">${badgeText}</span>
       <span class="chevron">▶</span>
     </div>
@@ -481,11 +487,20 @@ function buildFindingsTable(doc) {
 
   const rows = doc.findings.map(f => {
     const chipClass = getChipClass(f.type);
-    const page    = f.page != null ? 'Page ' + f.page : '—';
+    const pageNum = f.page != null ? f.page : null;
+    const docPath = doc.filename.split('/').map(encodeURIComponent).join('/');
+    const previewUrl = pageNum && scanDataset
+      ? `/preview/${encodeURIComponent(scanDataset)}/${docPath}#page=${pageNum}`
+      : null;
+    const pageCell = pageNum != null
+      ? (previewUrl
+          ? `<a href="${previewUrl}" target="_blank" title="Open page ${pageNum}" style="color:var(--accent);text-decoration:none;font-family:var(--mono);font-size:0.78rem;">Page ${pageNum}</a>`
+          : `Page ${pageNum}`)
+      : '—';
     const loc     = f.location || (f.bbox ? formatBbox(f.bbox) : '—');
     const details = esc(f.details || f.type);
     return `<tr>
-      <td class="page-cell">${page}</td>
+      <td class="page-cell">${pageCell}</td>
       <td><span class="type-chip ${chipClass}">${esc(f.type)}</span></td>
       <td class="loc-cell">${esc(loc)}</td>
       <td class="detail-cell">${details}</td>

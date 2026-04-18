@@ -302,6 +302,7 @@ input[type="checkbox"] {
     <a href="/" class="nav-link">📇 Index</a>
     <a href="/production" class="nav-link active">📦 Production</a>
     <a href="/redactions" class="nav-link">◼ Redactions</a>
+    <a href="/log" class="nav-link">📋 Log</a>
   </nav>
 </header>
 
@@ -476,7 +477,12 @@ function renderProdResults(results) {
               onchange="onDocCheck(this)">
           </td>
           <td class="doc-name">${esc(d.name)}</td>
-          <td class="chunks-cell">${d.chunks.map(c => `<span class="chunk-tag">${esc(c)}</span>`).join("")}</td>
+          <td class="chunks-cell">${d.chunks.map(c => {
+            const pageNum = c.match(/^p(\d+)$/)?.[1];
+            const docPath = d.name.split('/').map(encodeURIComponent).join('/');
+            const url = `/preview/${encodeURIComponent(prodDataset)}/${docPath}${pageNum ? '#page=' + pageNum : ''}`;
+            return `<a class="chunk-tag" href="${url}" target="_blank" title="Open at ${esc(c)}">${esc(c)}</a>`;
+          }).join("")}</td>
           <td class="count-cell">${d.chunks.length}</td>
         </tr>`).join("");
     } else {
@@ -563,34 +569,18 @@ function syncTermSelectAll(term) {
 }
 
 function toggleTermAll(masterCb) {
-  const term    = masterCb.dataset.term;
-  const checked = masterCb.checked;
+  const term = masterCb.dataset.term;
   document.querySelectorAll(`.doc-checkbox[data-term="${CSS.escape(term)}"]`)
     .forEach(cb => {
-      cb.checked = checked;
-      const docName = cb.dataset.doc;
-      if (checked) {
-        const doc = (prodResults[term]?.docs || []).find(d => d.name === docName);
-        if (!selectedDocs[docName]) {
-          selectedDocs[docName] = { terms: new Set(), chunks: new Set() };
-        }
-        selectedDocs[docName].terms.add(term);
-        (doc?.chunks || []).forEach(c => selectedDocs[docName].chunks.add(c));
-      } else {
-        if (selectedDocs[docName]) {
-          selectedDocs[docName].terms.delete(term);
-          selectedDocs[docName].chunks = new Set();
-          selectedDocs[docName].terms.forEach(t => {
-            const d2 = (prodResults[t]?.docs || []).find(d => d.name === docName);
-            (d2?.chunks || []).forEach(c => selectedDocs[docName].chunks.add(c));
-          });
-          if (selectedDocs[docName].terms.size === 0) delete selectedDocs[docName];
-        }
+      if (cb.checked !== masterCb.checked) {
+        cb.checked = masterCb.checked;
+        onDocCheck(cb);
       }
     });
+  // Re-run to fix indeterminate
   syncTermSelectAll(term);
-  updateSelectBar();
-  if (checked) {
+  // Auto-open the card so users can see their selections
+  if (masterCb.checked) {
     const header = masterCb.closest('.result-header');
     const body   = header && header.nextElementSibling;
     if (body && !body.classList.contains('open')) {
