@@ -49,6 +49,8 @@ def main():
     print(f"  Templates   : {template_dir}")
     print("=" * 54)
 
+    icon_path = resource_path("strata.ico")
+
     window = webview.create_window(
         title      = "Strata",
         url        = f"file:///{index_html.replace(os.sep, '/')}",

@@ -87,7 +87,7 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,   # no terminal window for end users
-    icon=None,
+    icon="strata.ico",
 )
 
 coll = COLLECT(
@@ -101,7 +101,7 @@ if sys.platform == "darwin":
         coll,
         name="Strata.app",
         icon=None,
-        bundle_identifier="com.universalsearch.app",
+        bundle_identifier="com.strata.app",
         info_plist={
             "CFBundleShortVersionString": "1.0.0",
             "CFBundleVersion":            "1.0.0",
