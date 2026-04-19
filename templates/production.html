@@ -368,7 +368,17 @@ input[type="checkbox"] {
 function waitForApi() {
   return new Promise(resolve => {
     if (window.pywebview && window.pywebview.api) { resolve(); return; }
-    window.addEventListener('pywebviewready', () => resolve(), { once: true });
+    // Poll as fallback — pywebviewready can fire before listener is registered
+    const check = setInterval(() => {
+      if (window.pywebview && window.pywebview.api) {
+        clearInterval(check);
+        resolve();
+      }
+    }, 50);
+    window.addEventListener('pywebviewready', () => {
+      clearInterval(check);
+      resolve();
+    }, { once: true });
   });
 }
 async function api(method, ...args) {
