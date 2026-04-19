@@ -20,14 +20,15 @@ from pathlib import Path
 from collections import defaultdict
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
-BASE_DIR     = os.environ.get(
-    "UNIVERSAL_SEARCH_DATA",
-    os.path.join(os.path.expanduser("~"), "universal_search_data"),
-)
+_default_data = os.path.join(os.path.expanduser("~"), "Documents", "Strata")
+BASE_DIR     = os.environ.get("UNIVERSAL_SEARCH_DATA", _default_data)
 DATASETS_DIR = os.path.join(BASE_DIR, "datasets")
 EXPORTS_DIR  = os.path.join(BASE_DIR, "exports")
-os.makedirs(DATASETS_DIR, exist_ok=True)
-os.makedirs(EXPORTS_DIR,  exist_ok=True)
+try:
+    os.makedirs(DATASETS_DIR, exist_ok=True)
+    os.makedirs(EXPORTS_DIR,  exist_ok=True)
+except Exception as e:
+    print(f"Warning: could not create data dirs: {e}")
 
 # OCR settings
 OCR_ENABLED   = True
@@ -1096,6 +1097,8 @@ class Api:
 
     def open_file(self, dataset_name, doc_name, page_num=None):
         """Open a document in the system default viewer."""
+        if not dataset_name or not doc_name:
+            return {"error": "Missing parameters"}
         folder   = Path(DATASETS_DIR) / dataset_name
         filepath = folder / doc_name
         try:
@@ -1103,10 +1106,10 @@ class Api:
         except ValueError:
             return {"error": "Forbidden"}
         if not filepath.exists():
-            return {"error": "File not found"}
+            return {"error": f"File not found: {filepath}"}
         try:
             if sys.platform == "win32":
-                os.startfile(str(filepath))
+                os.startfile(str(filepath.resolve()))
             elif sys.platform == "darwin":
                 import subprocess
                 subprocess.Popen(["open", str(filepath)])
@@ -1120,10 +1123,10 @@ class Api:
     # ── Exports ───────────────────────────────────────────────────────────────
 
     def _open_export(self, path):
-        """Open an exported file in the system default app and reveal in folder."""
+        """Open an exported file in the system default app."""
         try:
             if sys.platform == "win32":
-                os.startfile(str(path))
+                os.startfile(str(Path(path).resolve()))
             elif sys.platform == "darwin":
                 import subprocess
                 subprocess.Popen(["open", str(path)])

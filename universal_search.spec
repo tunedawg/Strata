@@ -45,6 +45,7 @@ hidden_imports = [
     "reportlab", "reportlab.lib", "reportlab.lib.pagesizes",
     "reportlab.platypus", "reportlab.lib.styles",
     # Stdlib
+    "tkinter", "tkinter.messagebox",
     "pickle", "threading", "pathlib", "zipfile", "io", "shutil",
     "xml.etree.ElementTree", "charset_normalizer", "cryptography",
 ]

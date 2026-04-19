@@ -1,85 +1,66 @@
 @echo off
-REM ============================================================
-REM  Strata — MSIX Package Builder
-REM  Run AFTER build.bat has produced dist\Strata\
-REM
-REM  Requires Windows SDK (makeappx.exe + signtool.exe)
-REM  Install from: https://developer.microsoft.com/windows/downloads/windows-sdk/
-REM ============================================================
-
 echo.
 echo  Strata ^— MSIX Builder
 echo  ====================================
 echo.
 
-REM ── Find makeappx.exe ────────────────────────────────────────────────────────
-set SDKROOT=C:\Program Files (x86)\Windows Kits\10\bin
+set ROOT=%~dp0
+if "%ROOT:~-1%"=="\" set ROOT=%ROOT:~0,-1%
+echo  Root: %ROOT%
+
+REM ── Find makeappx ────────────────────────────────────────────────────────────
 set MAKEAPPX=
-for /d %%v in ("%SDKROOT%\10.*") do (
+for /d %%v in ("C:\Program Files (x86)\Windows Kits\10\bin\10.*") do (
     if exist "%%v\x64\makeappx.exe" set MAKEAPPX=%%v\x64\makeappx.exe
 )
-if "%MAKEAPPX%"=="" (
-    echo  ERROR: makeappx.exe not found. Install Windows SDK.
-    echo  https://developer.microsoft.com/windows/downloads/windows-sdk/
-    pause & exit /b 1
+if "%MAKEAPPX%"=="" for /d %%v in ("C:\Program Files\Windows Kits\10\bin\10.*") do (
+    if exist "%%v\x64\makeappx.exe" set MAKEAPPX=%%v\x64\makeappx.exe
 )
-echo  Found: %MAKEAPPX%
+if "%MAKEAPPX%"=="" ( echo ERROR: makeappx.exe not found. & pause & exit /b 1 )
+echo  makeappx: %MAKEAPPX%
 
-REM ── Find signtool.exe ────────────────────────────────────────────────────────
+REM ── Find signtool ────────────────────────────────────────────────────────────
 set SIGNTOOL=
-for /d %%v in ("%SDKROOT%\10.*") do (
+for /d %%v in ("C:\Program Files (x86)\Windows Kits\10\bin\10.*") do (
     if exist "%%v\x64\signtool.exe" set SIGNTOOL=%%v\x64\signtool.exe
 )
 
-REM ── Build MSIX staging folder ────────────────────────────────────────────────
-echo  Preparing MSIX staging folder...
-if exist msix_staging rmdir /s /q msix_staging
-mkdir msix_staging
+REM ── Staging ──────────────────────────────────────────────────────────────────
+set STAGING=%ROOT%\msix_staging
+echo  Preparing staging...
+if exist "%STAGING%" rmdir /s /q "%STAGING%"
+mkdir "%STAGING%"
+xcopy /E /I /Q "%ROOT%\dist\Strata" "%STAGING%"
+copy "%ROOT%\AppxManifest.xml" "%STAGING%\AppxManifest.xml"
+mkdir "%STAGING%\assets"
+copy "%ROOT%\assets\Square44x44Logo.png"   "%STAGING%\assets\Square44x44Logo.png"
+copy "%ROOT%\assets\Square50x50Logo.png"   "%STAGING%\assets\Square50x50Logo.png"
+copy "%ROOT%\assets\Square150x150Logo.png" "%STAGING%\assets\Square150x150Logo.png"
+copy "%ROOT%\assets\Wide310x150Logo.png"   "%STAGING%\assets\Wide310x150Logo.png"
 
-REM Copy app files
-xcopy /E /I /Q dist\Strata msix_staging
-REM Copy manifest and assets
-copy AppxManifest.xml msix_staging\AppxManifest.xml
-xcopy /E /I /Q assets msix_staging\assets
-
-REM ── Create MSIX ──────────────────────────────────────────────────────────────
-echo  Creating MSIX package...
-if exist dist\Strata.msix del dist\Strata.msix
-
-"%MAKEAPPX%" pack /d msix_staging /p dist\Strata.msix /nv
-if errorlevel 1 (
-    echo  ERROR: makeappx failed.
-    pause & exit /b 1
-)
+REM ── Pack ─────────────────────────────────────────────────────────────────────
+set MSIX=%ROOT%\dist\Strata.msix
+if exist "%MSIX%" del "%MSIX%"
+echo  Packing...
+"%MAKEAPPX%" pack /d "%STAGING%" /p "%MSIX%" /nv
+if errorlevel 1 ( echo ERROR: makeappx failed. & pause & exit /b 1 )
 echo  Created: dist\Strata.msix
 
-REM ── Sign with self-signed cert (for local testing) ───────────────────────────
-if not exist strata_test.pfx (
-    echo.
-    echo  Creating self-signed certificate for testing...
-    powershell -Command "New-SelfSignedCertificate -Type Custom -Subject 'CN=StrataTest' -KeyUsage DigitalSignature -FriendlyName 'Strata Test Cert' -CertStoreLocation 'Cert:\CurrentUser\My' -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3','2.5.29.19={text}') | Export-PfxCertificate -FilePath strata_test.pfx -Password (ConvertTo-SecureString -String 'StrataTest123' -Force -AsPlainText)"
+REM ── Sign ─────────────────────────────────────────────────────────────────────
+set PFX=%ROOT%\strata_test.pfx
+if not exist "%PFX%" (
+    echo  Creating self-signed cert...
+    powershell -Command "New-SelfSignedCertificate -Type Custom -Subject 'CN=Noah Tunis' -KeyUsage DigitalSignature -FriendlyName 'Strata Test' -CertStoreLocation 'Cert:\CurrentUser\My' -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3','2.5.29.19={text}') | Export-PfxCertificate -FilePath '%PFX%' -Password (ConvertTo-SecureString -String 'StrataTest123' -Force -AsPlainText)"
 )
-
-if exist "%SIGNTOOL%" (
-    echo  Signing MSIX...
-    "%SIGNTOOL%" sign /fd SHA256 /a /f strata_test.pfx /p StrataTest123 dist\Strata.msix
-    if errorlevel 1 (
-        echo  WARNING: Signing failed ^— MSIX created but unsigned.
-    ) else (
-        echo  Signed successfully.
-    )
+if not "%SIGNTOOL%"=="" (
+    echo  Signing...
+    "%SIGNTOOL%" sign /fd SHA256 /a /f "%PFX%" /p StrataTest123 "%MSIX%"
 )
 
 echo.
 echo  ============================================================
-echo   MSIX ready: dist\Strata.msix
-echo.
-echo   To install locally for testing:
-echo     1. Double-click dist\Strata.msix
-echo     2. Or: Add-AppxPackage dist\Strata.msix  ^(PowerShell^)
-echo.
-echo   For Store submission: upload dist\Strata.msix to
-echo   Partner Center ^(Microsoft signs it for you^)
+echo   SUCCESS: dist\Strata.msix
+echo   Upload this to Partner Center for Store submission.
 echo  ============================================================
 echo.
 pause
