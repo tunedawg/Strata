@@ -382,22 +382,29 @@ input[type="checkbox"] {
 
 <script>
 // ── pywebview bridge ─────────────────────────────────────────────────────────
+let _apiReady = false;
+let _apiResolvers = [];
 function waitForApi() {
+  if (_apiReady) return Promise.resolve();
   return new Promise(resolve => {
-    if (window.pywebview && window.pywebview.api) { resolve(); return; }
-    // Poll as fallback — pywebviewready can fire before listener is registered
-    const check = setInterval(() => {
-      if (window.pywebview && window.pywebview.api) {
-        clearInterval(check);
-        resolve();
-      }
-    }, 50);
-    window.addEventListener('pywebviewready', () => {
-      clearInterval(check);
-      resolve();
-    }, { once: true });
+    _apiResolvers.push(resolve);
   });
 }
+function _checkApi() {
+  if (window.pywebview && window.pywebview.api) {
+    _apiReady = true;
+    _apiResolvers.forEach(r => r());
+    _apiResolvers = [];
+    return;
+  }
+  setTimeout(_checkApi, 30);
+}
+window.addEventListener('pywebviewready', () => {
+  _apiReady = true;
+  _apiResolvers.forEach(r => r());
+  _apiResolvers = [];
+}, { once: true });
+_checkApi();
 async function api(method, ...args) {
   await waitForApi();
   return window.pywebview.api[method](...args);
@@ -417,24 +424,38 @@ async function openFile(dataset, docName, pageNum) {
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────
-function init() {
+async function init() {
   prodAddTerm();
-  api('get_datasets').then(d => {
-    const datasets = d.datasets || [];
-      const sel = document.getElementById("dataset-select");
-      const indexed = datasets.filter(ds => ds.indexed);
-      if (!indexed.length) {
-        sel.innerHTML = '<option value="">— No indexed datasets found —</option>';
-        return;
-      }
-      indexed.forEach(ds => {
-        const opt = document.createElement("option");
-        opt.value = ds.name;
-        opt.textContent = ds.name + " (" + ds.files + " file" + (ds.files !== 1 ? "s" : "") + ")";
-        sel.appendChild(opt);
-      });
-    })
-    .catch(() => {});
+  try {
+    // Load datasets and index status in parallel
+    const [dsResp, statusResp] = await Promise.all([
+      api('get_datasets'),
+      api('get_index_status')
+    ]);
+    const datasets = dsResp.datasets || [];
+    const loaded   = statusResp.loaded || null;  // already-active dataset name
+    const sel = document.getElementById('dataset-select');
+    const indexed = datasets.filter(ds => ds.indexed);
+    if (!indexed.length) {
+      sel.innerHTML = '<option value="">— No indexed datasets found —</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">— Select a production —</option>';
+    indexed.forEach(ds => {
+      const opt = document.createElement('option');
+      opt.value = ds.name;
+      opt.textContent = ds.name + ' (' + ds.files + ' file' + (ds.files !== 1 ? 's' : '') + ')';
+      if (ds.name === loaded) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    // If one was already loaded, activate it
+    if (loaded && indexed.find(ds => ds.name === loaded)) {
+      prodDataset = loaded;
+      document.getElementById('prod-search-btn').disabled = false;
+    }
+  } catch(e) {
+    console.error('Init error:', e);
+  }
 }
 
 // ── Dataset ───────────────────────────────────────────────────────────────────

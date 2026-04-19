@@ -311,22 +311,29 @@ tr:hover td { background: rgba(255,255,255,0.015); }
 <div id="loading"><div class="spinner-ring"></div></div>
 
 <script>
+let _apiReady = false;
+let _apiResolvers = [];
 function waitForApi() {
+  if (_apiReady) return Promise.resolve();
   return new Promise(resolve => {
-    if (window.pywebview && window.pywebview.api) { resolve(); return; }
-    // Poll as fallback — pywebviewready can fire before listener is registered
-    const check = setInterval(() => {
-      if (window.pywebview && window.pywebview.api) {
-        clearInterval(check);
-        resolve();
-      }
-    }, 50);
-    window.addEventListener('pywebviewready', () => {
-      clearInterval(check);
-      resolve();
-    }, { once: true });
+    _apiResolvers.push(resolve);
   });
 }
+function _checkApi() {
+  if (window.pywebview && window.pywebview.api) {
+    _apiReady = true;
+    _apiResolvers.forEach(r => r());
+    _apiResolvers = [];
+    return;
+  }
+  setTimeout(_checkApi, 30);
+}
+window.addEventListener('pywebviewready', () => {
+  _apiReady = true;
+  _apiResolvers.forEach(r => r());
+  _apiResolvers = [];
+}, { once: true });
+_checkApi();
 async function api(method, ...args) {
   await waitForApi();
   return window.pywebview.api[method](...args);
@@ -348,9 +355,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
 async function loadDatasets() {
   try {
-    const _dsresp = await api('get_datasets');
-    const sel = document.getElementById('dataset-select');
-    const list = _dsresp.datasets || [];
+    const [_dsresp, _status] = await Promise.all([
+      api('get_datasets'),
+      api('get_index_status')
+    ]);
+    const sel    = document.getElementById('dataset-select');
+    const list   = _dsresp.datasets || [];
+    const loaded = _status.loaded || null;
     const indexed = list.filter(d => typeof d === 'object' ? d.indexed : true);
     if (!indexed.length) {
       sel.innerHTML = '<option value="">— No indexed datasets —</option>';
@@ -362,8 +373,10 @@ async function loadDatasets() {
       const files = typeof d === 'object' ? d.files : '';
       opt.value = name;
       opt.textContent = files ? `${name} (${files} files)` : name;
+      if (name === loaded) opt.selected = true;
       sel.appendChild(opt);
     });
+    if (loaded) document.getElementById('scan-btn').disabled = false;
   } catch(e) { console.error('loadDatasets', e); }
 }
 
