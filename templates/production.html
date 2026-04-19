@@ -408,10 +408,6 @@ window.addEventListener('pywebviewready', () => {
 _checkApi();
 async function api(method, ...args) {
   await waitForApi();
-  if (typeof window.pywebview.api[method] !== 'function') {
-    console.error('[Strata] method not found:', method, '| available:', Object.keys(window.pywebview.api));
-    return { error: 'Method not found: ' + method };
-  }
   return window.pywebview.api[method](...args);
 }
 function navigate(page) {
@@ -439,12 +435,10 @@ async function init() {
     ]);
     const datasets = dsResp.datasets || [];
     const loaded   = statusResp.loaded || null;
-    console.log('[Strata] datasets:', datasets, 'loaded:', loaded);
     const sel = document.getElementById('dataset-select');
     const indexed = datasets.filter(ds => ds.indexed);
     if (!indexed.length) {
       sel.innerHTML = '<option value="">— No indexed datasets found —</option>';
-      console.log('[Strata] no indexed datasets found');
       return;
     }
     sel.innerHTML = '<option value="">— Select a production —</option>';

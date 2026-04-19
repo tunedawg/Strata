@@ -337,10 +337,6 @@ window.addEventListener('pywebviewready', () => {
 _checkApi();
 async function api(method, ...args) {
   await waitForApi();
-  if (typeof window.pywebview.api[method] !== 'function') {
-    console.error('[Strata] method not found:', method, '| available:', Object.keys(window.pywebview.api));
-    return { error: 'Method not found: ' + method };
-  }
   return window.pywebview.api[method](...args);
 }
 

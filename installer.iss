@@ -1,20 +1,20 @@
 ; ============================================================
-;  Universal Search — Inno Setup 6 installer script
-;  Produces: dist\UniversalSearch_Setup.exe
+;  Strata — Inno Setup 6 installer script
+;  Produces: dist\Strata_Setup.exe
 ;
 ;  Run after build.bat, or compile manually:
 ;    "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
 ; ============================================================
 
-#define AppName      "Universal Search"
+#define AppName      "Strata"
 #define AppVersion   "1.0"
 #define AppPublisher "Your Firm Name"
 #define AppURL       ""
-#define AppExeName   "UniversalSearch.exe"
-#define SourceDir    "dist\UniversalSearch"
+#define AppExeName   "Strata.exe"
+#define SourceDir    "dist\Strata"
 
 [Setup]
-AppId={{A7F2C3D1-4E8B-4F9A-B2D3-6C7E8F9A0B1C}
+AppId={{B3E1D4F2-5A9C-4E8B-C3D4-7F8A9B0C2D3E}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}
@@ -25,7 +25,7 @@ DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 AllowNoIcons=yes
 OutputDir=dist
-OutputBaseFilename=UniversalSearch_Setup
+OutputBaseFilename=Strata_Setup
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -45,7 +45,7 @@ Name: "startmenuicon"; Description: "Create a Start &Menu shortcut"; GroupDescri
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{userdesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon; Comment: "Open Universal Search"
+Name: "{userdesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon; Comment: "Open Strata"
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: startmenuicon
 Name: "{group}\Uninstall {#AppName}"; Filename: "{uninstallexe}"
 
@@ -65,9 +65,9 @@ begin
     DataPath := ExpandConstant('{userdocs}') + '\UniversalSearch';
     MsgBox(
       'Installation complete!' + #13#10 + #13#10 +
-      'Your datasets and exports will be saved to:' + #13#10 +
+      'Your productions and exports will be saved to:' + #13#10 +
       '  ' + DataPath + #13#10 + #13#10 +
-      'This folder is preserved if you update or reinstall the app.',
+      'This folder is preserved if you update or reinstall.',
       mbInformation, MB_OK
     );
   end;

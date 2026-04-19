@@ -81,7 +81,7 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz, a.scripts, [],
     exclude_binaries=True,
-    name="UniversalSearch",
+    name="Strata",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -93,13 +93,13 @@ exe = EXE(
 coll = COLLECT(
     exe, a.binaries, a.zipfiles, a.datas,
     strip=False, upx=True, upx_exclude=[],
-    name="UniversalSearch",
+    name="Strata",
 )
 
 if sys.platform == "darwin":
     app = BUNDLE(
         coll,
-        name="UniversalSearch.app",
+        name="Strata.app",
         icon=None,
         bundle_identifier="com.universalsearch.app",
         info_plist={
