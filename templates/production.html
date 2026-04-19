@@ -3,63 +3,74 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Production Review — Universal Search</title>
+<title>Strata — Production</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 :root {
   --bg:        #080a0f;
   --surface:   #0f1118;
   --surface2:  #161b26;
+  --surface3:  #1c2235;
   --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
   --accent:    #3b82f6;
-  --accent2:   #818cf8;
   --accent-hi: #60a5fa;
   --accent-lo: rgba(59,130,246,0.12);
+  --accent2:   #818cf8;
   --success:   #34d399;
   --warning:   #fbbf24;
   --danger:    #f87171;
-  --text:      #e2e8f0;
+  --redact:    #fb923c;
+  --text:      #f1f5f9;
   --text2:     #64748b;
   --text3:     #334155;
   --mono:      'Cascadia Code', 'Fira Mono', 'Consolas', monospace;
   --sans:      -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --radius:    10px;
+  --radius-sm: 6px;
+  --transition: 0.15s ease;
 }
-
-body {
-  font-family: var(--sans);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
 
 /* ── Header ── */
-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 18px 32px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+header { display: flex; align-items: center; padding: 0 24px; height: 52px; border-bottom: 1px solid var(--border); background: rgba(8,10,15,0.95); backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 100; flex-shrink: 0; }
+.logo { display: flex; align-items: center; gap: 9px; margin-right: 32px; }
+.logo-mark { width: 26px; height: 26px; flex-shrink: 0; }
+.logo-mark svg { width: 100%; height: 100%; }
+.logo-name { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.03em; color: var(--text); }
+nav { display: flex; align-items: center; height: 100%; gap: 2px; }
+.nav-link { display: flex; align-items: center; height: 100%; padding: 0 16px; font-size: 0.8rem; font-weight: 500; text-decoration: none; color: var(--text2); border-bottom: 2px solid transparent; transition: color var(--transition), border-color var(--transition); cursor: pointer; background: none; border-top: none; border-left: none; border-right: none; font-family: var(--sans); letter-spacing: 0.01em; }
+.nav-link:hover { color: var(--text); }
+.nav-link.active { color: var(--accent-hi); border-bottom-color: var(--accent); }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); border: none; font-size: 0.8rem; font-weight: 500; font-family: var(--sans); cursor: pointer; transition: all var(--transition); white-space: nowrap; letter-spacing: 0.01em; }
+.btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hi); }
+.btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--surface3); }
+.btn-sm { padding: 6px 12px; font-size: 0.75rem; }
+.btn-danger { background: rgba(248,113,113,0.1); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
+.btn-danger:hover { background: rgba(248,113,113,0.18); }
+
+/* ── Section labels ── */
+.section-label {
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+  font-weight: 500;
 }
-.logo { display: flex; align-items: center; gap: 10px; }
-.logo-icon {
-  width: 32px; height: 32px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px;
-}
-.logo h1 { font-size: 1rem; font-weight: 600; letter-spacing: -0.02em; }
-.logo span { font-size: 0.75rem; color: var(--text2); font-family: var(--mono); }
-.nav-link {
-  padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 500;
-  text-decoration: none; color: var(--text2); transition: all 0.15s;
-}
-.nav-link:hover { color: var(--text); background: var(--surface2); }
-.nav-link.active { color: var(--accent); background: rgba(79,142,247,0.1); }
+
+/* ── Loading ── */
+#loading { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 300; align-items: center; justify-content: center; }
+#loading.show { display: flex; }
+.spinner { width: 36px; height: 36px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
 /* ── Layout ── */
 .app {
@@ -83,12 +94,13 @@ aside {
   border-bottom: 1px solid var(--border);
 }
 .sidebar-section h3 {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-family: var(--mono);
-  color: var(--text3);
+  color: var(--text2);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 12px;
+  font-weight: 500;
 }
 
 /* Dataset select */
@@ -293,11 +305,14 @@ input[type="checkbox"] {
 
 <header>
   <div class="logo">
-    <div class="logo-icon">📦</div>
-    <div>
-      <h1>Universal Search</h1>
-      <span>production review</span>
+    <div class="logo-mark">
+      <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="5" width="20" height="4" rx="2" fill="#3b82f6" opacity="1"/>
+        <rect x="3" y="11" width="20" height="4" rx="2" fill="#3b82f6" opacity="0.6"/>
+        <rect x="3" y="17" width="20" height="4" rx="2" fill="#3b82f6" opacity="0.3"/>
+      </svg>
     </div>
+    <span class="logo-name">Strata</span>
   </div>
   <nav>
     <a href="#" onclick="navigate('index.html')" class="nav-link">Index</a>
