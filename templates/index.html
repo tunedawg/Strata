@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Universal Search</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -21,8 +20,8 @@
   --text:      #e2e8f0;
   --text2:     #8892a4;
   --text3:     #4a5568;
-  --mono:      'DM Mono', monospace;
-  --sans:      'DM Sans', sans-serif;
+  --mono:      'Cascadia Code', 'Fira Mono', 'Consolas', monospace;
+  --sans:      -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 body {
@@ -460,9 +459,9 @@ tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
     </div>
   </div>
   <nav style="display:flex;gap:4px;margin-left:24px;">
-    <a href="/" class="nav-link active">📇 Index</a>
-    <a href="/production" class="nav-link">📦 Production</a>
-    <a href="/redactions" class="nav-link">◼ Redactions</a>
+    <a href="#" class="nav-link active">📇 Index</a>
+    <a href="#" onclick="navigate('production.html')" class="nav-link">📦 Production</a>
+    <a href="#" onclick="navigate('redactions.html')" class="nav-link">◼ Redactions</a>
   </nav>
   <div id="status-pill">
     <div class="dot"></div>
@@ -500,18 +499,12 @@ tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
         <div>Drop files or folders here</div>
         <div style="font-size:0.7rem;margin-top:4px;color:var(--text3)">PDF · DOCX · PPTX · CSV · XLSX · TXT · EML · MSG · PNG · JPG · TIFF</div>
       </div>
-      <!-- hidden inputs: individual files and whole folder -->
-      <input type="file" id="file-input" multiple
-        accept=".pdf,.docx,.doc,.pptx,.ppt,.csv,.xlsx,.xls,.txt,.md,.rtf,.eml,.msg,.png,.jpg,.jpeg,.tif,.tiff,.bmp"
-        onchange="uploadFiles(Array.from(this.files), false); this.value=''">
-      <input type="file" id="folder-input" webkitdirectory multiple
-        onchange="uploadFiles(Array.from(this.files), true); this.value=''">
-      <!-- browse buttons -->
+      <!-- Native file/folder picker via pywebview -->
       <div style="margin-top:8px;display:flex;gap:6px">
         <button class="btn btn-ghost" style="flex:1;font-size:0.78rem"
-          onclick="document.getElementById('file-input').click()">📄 Files</button>
+          onclick="pickAndUpload(false)">📄 Files</button>
         <button class="btn btn-ghost" style="flex:1;font-size:0.78rem"
-          onclick="document.getElementById('folder-input').click()">📁 Folder</button>
+          onclick="pickAndUpload(true)">📁 Folder</button>
       </div>
       <div style="margin-top:8px">
         <button class="btn btn-primary" style="width:100%;font-size:0.82rem" onclick="indexDataset()">
@@ -570,277 +563,239 @@ tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
 let activeDataset  = null;
 let currentResults = {};
 
-// ── Status polling ────────────────────────────────────────────────────────────
-function pollStatus() {
-  fetch("/index_status").then(r => r.json()).then(d => {
-    const pill = document.getElementById("status-pill");
-    const text = document.getElementById("status-text");
-    const btn  = document.getElementById("search-btn");
+// ── pywebview bridge ─────────────────────────────────────────────────────────
+// All API calls go through window.pywebview.api
+// pywebview injects this after the page loads, so we wait for it.
+function waitForApi() {
+  return new Promise(resolve => {
+    if (window.pywebview && window.pywebview.api) { resolve(); return; }
+    window.addEventListener('pywebviewready', () => resolve(), { once: true });
+  });
+}
 
-    if (d.status === "indexing") {
-      pill.className = "busy";
+async function api(method, ...args) {
+  await waitForApi();
+  return window.pywebview.api[method](...args);
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function navigate(page) {
+  // Find path of current file and load sibling page
+  const base = window.location.href.replace(/[^/]+$/, '');
+  window.location.href = base + page;
+}
+
+// ── Status polling ────────────────────────────────────────────────────────────
+async function pollStatus() {
+  try {
+    const d    = await api('get_index_status');
+    const pill = document.getElementById('status-pill');
+    const text = document.getElementById('status-text');
+    const btn  = document.getElementById('search-btn');
+
+    if (d.status === 'indexing') {
+      pill.className = 'busy';
       const pct = d.total ? Math.round(d.done / d.total * 100) : 0;
       text.textContent = `Indexing ${d.dataset}… ${d.done}/${d.total} (${pct}%)`;
-      showProgress(d.done, d.total, `Indexing ${d.dataset}`);
       setTimeout(pollStatus, 1500);
-    } else if (d.status === "loading") {
-      pill.className = "busy";
+    } else if (d.status === 'loading') {
+      pill.className = 'busy';
       text.textContent = `Loading ${d.dataset}…`;
       setTimeout(pollStatus, 800);
-    } else if (d.status === "ready" && d.loaded) {
-      pill.className = "ready";
+    } else if (d.status === 'ready' && d.loaded) {
+      pill.className = 'ready';
       text.textContent = `${d.loaded}  ·  ${d.done} files`;
       btn.disabled = false;
-      hideProgress();
       refreshDatasets();
-      setTimeout(pollStatus, 3000);  // keep polling in case dataset switches
+      setTimeout(pollStatus, 3000);
     } else {
-      pill.className = "";
-      text.textContent = "No dataset loaded";
+      pill.className = '';
+      text.textContent = 'No dataset loaded';
       btn.disabled = true;
       setTimeout(pollStatus, 3000);
     }
-  }).catch(() => setTimeout(pollStatus, 3000));
+  } catch(e) {
+    setTimeout(pollStatus, 3000);
+  }
 }
-
-function showProgress(done, total, label) {
-  // show in active dataset card — simplified
-}
-function hideProgress() {}
 
 // ── Datasets ──────────────────────────────────────────────────────────────────
-function refreshDatasets() {
-  fetch("/datasets").then(r => r.json()).then(datasets => {
-    const list = document.getElementById("dataset-list");
-    if (!datasets.length) {
-      list.innerHTML = `<div style="color:var(--text3);font-size:0.8rem;font-family:var(--mono);text-align:center;padding:20px">No datasets yet</div>`;
-      return;
-    }
-    list.innerHTML = datasets.map(ds => `
-      <div class="dataset-item ${ds.name === activeDataset ? 'active' : ''}"
-           onclick="selectDataset('${esc(ds.name)}', ${ds.indexed})">
-        <div class="ds-icon">${ds.indexed ? '📚' : '📁'}</div>
-        <div class="ds-info">
-          <div class="ds-name">${esc(ds.name)}</div>
-          <div class="ds-meta">${ds.files} file${ds.files !== 1 ? 's' : ''}${ds.indexed ? ' · indexed' : ' · not indexed'}</div>
-        </div>
-        <button class="icon-btn" title="Delete dataset" onclick="event.stopPropagation(); deleteDataset('${esc(ds.name)}')" style="color:var(--danger);opacity:0.6">🗑</button>
-      </div>`).join("");
-  });
+async function refreshDatasets() {
+  const d    = await api('get_datasets');
+  const list = document.getElementById('dataset-list');
+  const datasets = d.datasets || [];
+  if (!datasets.length) {
+    list.innerHTML = `<div style="color:var(--text3);font-size:0.8rem;font-family:var(--mono);text-align:center;padding:20px">No datasets yet</div>`;
+    return;
+  }
+  list.innerHTML = datasets.map(ds => `
+    <div class="dataset-item ${ds.name === activeDataset ? 'active' : ''}"
+         onclick="selectDataset('${esc(ds.name)}', ${ds.indexed})">
+      <div class="ds-icon">${ds.indexed ? '📚' : '📁'}</div>
+      <div class="ds-info">
+        <div class="ds-name">${esc(ds.name)}</div>
+        <div class="ds-meta">${ds.files} file${ds.files !== 1 ? 's' : ''}${ds.indexed ? ' · indexed' : ' · not indexed'}</div>
+      </div>
+      <button class="icon-btn" title="Delete dataset" onclick="event.stopPropagation(); deleteDataset('${esc(ds.name)}')" style="color:var(--danger);opacity:0.6">🗑</button>
+    </div>`).join('');
 }
 
-function deleteDataset(name) {
+async function deleteDataset(name) {
   if (!confirm(`Delete dataset "${name}" and all its files? This cannot be undone.`)) return;
-  fetch(`/datasets/${encodeURIComponent(name)}/delete`, { method: "POST" })
-    .then(r => r.json())
-    .then(d => {
-      if (d.error) { alert("Error: " + d.error); return; }
-      if (activeDataset === name) {
-        activeDataset = null;
-        document.getElementById("upload-section").style.display = "none";
-      }
-      refreshDatasets();
-      pollStatus();
-    });
+  const d = await api('delete_dataset', name);
+  if (d.error) { alert('Error: ' + d.error); return; }
+  if (activeDataset === name) {
+    activeDataset = null;
+    document.getElementById('upload-section').style.display = 'none';
+  }
+  refreshDatasets();
+  pollStatus();
 }
 
-function selectDataset(name, indexed) {
+async function selectDataset(name, indexed) {
   activeDataset = name;
-  document.getElementById("upload-section").style.display = "block";
-  document.getElementById("upload-title").textContent = `Files in: ${name}`;
+  document.getElementById('upload-section').style.display = 'block';
+  document.getElementById('upload-title').textContent = `Files in: ${name}`;
   refreshDatasets();
-
-  // Only auto-load if already indexed
   if (indexed) {
-    fetch(`/datasets/${encodeURIComponent(name)}/load`, { method: "POST" })
-      .then(r => r.json())
-      .then(d => { if (d.ok) pollStatus(); });
+    const d = await api('load_dataset', name);
+    if (d.ok) pollStatus();
   }
 }
 
-function createDataset() {
-  const input = document.getElementById("new-ds-name");
+async function createDataset() {
+  const input = document.getElementById('new-ds-name');
   const name  = input.value.trim();
   if (!name) return;
-  fetch("/datasets/create", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name })
-  }).then(r => r.json()).then(d => {
-    if (d.error) { alert(d.error); return; }
-    input.value = "";
-    refreshDatasets();
-    selectDataset(name, false);  // newly created, not yet indexed
-  });
-}
-
-// ── Upload (files or entire folders) ─────────────────────────────────────────
-const UPLOAD_BATCH = 50;   // files per request
-
-async function uploadFiles(fileArr, preservePath) {
-  if (!activeDataset || !fileArr.length) return;
-  const total     = fileArr.length;
-  const statusEl  = document.getElementById("upload-status");
-  const progWrap  = document.getElementById("upload-prog-wrap");
-  const progBar   = document.getElementById("upload-prog-bar");
-
-  statusEl.textContent = `Uploading ${total} file${total !== 1 ? "s" : ""}…`;
-  progWrap.style.display = "block";
-  progBar.style.width    = "0%";
-
-  let uploaded = 0, allSaved = [];
-
-  for (let i = 0; i < fileArr.length; i += UPLOAD_BATCH) {
-    const batch = fileArr.slice(i, i + UPLOAD_BATCH);
-    const fd = new FormData();
-    for (const f of batch) {
-      // Use _relPath (set by folder-drop traversal), or webkitRelativePath for folder input,
-      // or fall back to the bare filename for plain file picks.
-      const relPath = f._relPath || (preservePath && f.webkitRelativePath) || f.name;
-      fd.append("files", f, relPath);
-    }
-    try {
-      const r = await fetch(`/datasets/${encodeURIComponent(activeDataset)}/upload`,
-                            { method: "POST", body: fd });
-      const d = await r.json();
-      if (d.ok) allSaved = allSaved.concat(d.saved || []);
-      else {
-        statusEl.textContent = `Error: ${d.error}`;
-        progWrap.style.display = "none";
-        return;
-      }
-    } catch (err) {
-      statusEl.textContent = `Network error: ${err.message}`;
-      progWrap.style.display = "none";
-      return;
-    }
-    uploaded += batch.length;
-    progBar.style.width = Math.round(uploaded / total * 100) + "%";
-    statusEl.textContent = `Uploading… ${uploaded} / ${total}`;
-  }
-
-  progWrap.style.display = "none";
-  const folders = new Set(
-    allSaved.map(p => p.includes("/") ? p.split("/")[0] : null).filter(Boolean)
-  );
-  const summary = `✓ ${allSaved.length} file${allSaved.length !== 1 ? "s" : ""} uploaded` +
-    (folders.size ? ` (${folders.size} folder${folders.size !== 1 ? "s" : ""})` : "");
-  statusEl.textContent = summary;
+  const d = await api('create_dataset', name);
+  if (d.error) { alert(d.error); return; }
+  input.value = '';
   refreshDatasets();
+  selectDataset(name, false);
 }
 
-// Recursively read a FileSystemEntry (file or directory) and return flat File array.
-// Each file gets a ._relPath property with its relative path (including parent folder name).
-async function _readEntry(entry, basePath) {
-  return new Promise(resolve => {
-    if (entry.isFile) {
-      entry.file(file => {
-        file._relPath = basePath + file.name;
-        resolve([file]);
-      }, () => resolve([]));
-    } else if (entry.isDirectory) {
-      const reader = entry.createReader();
-      // readEntries may return results in batches — must call until empty
-      const readAll = (acc) => {
-        reader.readEntries(async entries => {
-          if (!entries.length) {
-            const nested = await Promise.all(
-              acc.map(e => _readEntry(e, basePath + entry.name + "/"))
-            );
-            resolve(nested.flat());
-          } else {
-            readAll([...acc, ...entries]);
-          }
-        }, () => resolve([]));
-      };
-      readAll([]);
-    } else {
-      resolve([]);
-    }
-  });
-}
+// ── Upload ────────────────────────────────────────────────────────────────────
+// pywebview provides a native file/folder picker dialog.
+// OPEN_DIALOG = 10, FOLDER_DIALOG = 20 (pywebview constants)
+const OPEN_DIALOG   = 10;
+const FOLDER_DIALOG = 20;
 
-async function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById("drop-zone").classList.remove("drag");
-
-  // Use DataTransferItem + FileSystem Entry API to support folder drops
-  const items = e.dataTransfer.items;
-  if (items && items.length) {
-    const allFiles = [];
-    for (const item of Array.from(items)) {
-      const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
-      if (entry) {
-        const files = await _readEntry(entry, "");
-        allFiles.push(...files);
-      } else {
-        const f = item.getAsFile ? item.getAsFile() : null;
-        if (f) allFiles.push(f);
-      }
-    }
-    if (allFiles.length) { uploadFiles(allFiles, true); return; }
-  }
-  // Fallback for browsers without DataTransferItem support
-  uploadFiles(Array.from(e.dataTransfer.files), false);
-}
-
-function indexDataset() {
+async function pickAndUpload(folder) {
   if (!activeDataset) return;
-  fetch(`/datasets/${encodeURIComponent(activeDataset)}/index`, { method: "POST" })
-    .then(() => pollStatus());
+  await waitForApi();
+  const statusEl = document.getElementById('upload-status');
+  const progWrap = document.getElementById('upload-prog-wrap');
+  const progBar  = document.getElementById('upload-prog-bar');
+
+  try {
+    if (folder) {
+      // Pick a folder — returns a single string (the folder path) or null
+      const result = await window.pywebview.windows[0].create_file_dialog(
+        FOLDER_DIALOG, allow_multiple=false
+      );
+      if (!result || !result.length) return;
+      const folderPath = result[0];
+      statusEl.textContent = 'Reading folder…';
+
+      // Ask Python to walk the folder and upload everything
+      const d = await api('upload_folder', activeDataset, null, folderPath);
+      if (d.error) { statusEl.textContent = 'Error: ' + d.error; return; }
+      statusEl.textContent = `✓ ${d.saved.length} file${d.saved.length !== 1 ? 's' : ''} uploaded`;
+    } else {
+      // Pick individual files — returns array of paths
+      const result = await window.pywebview.windows[0].create_file_dialog(
+        OPEN_DIALOG, allow_multiple=true,
+        file_types=('Documents (*.pdf;*.docx;*.doc;*.pptx;*.ppt;*.csv;*.xlsx;*.xls;*.txt;*.md;*.rtf;*.eml;*.msg;*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.bmp)',)
+      );
+      if (!result || !result.length) return;
+
+      statusEl.textContent = `Uploading ${result.length} file${result.length !== 1 ? 's' : ''}…`;
+      progWrap.style.display = 'block'; progBar.style.width = '0%';
+
+      // Upload in batches of 50 paths at a time
+      const BATCH = 50;
+      let saved = [], done = 0;
+      for (let i = 0; i < result.length; i += BATCH) {
+        const batch = result.slice(i, i + BATCH);
+        const d     = await api('upload_files', activeDataset, batch);
+        if (d.error) { statusEl.textContent = 'Error: ' + d.error; progWrap.style.display = 'none'; return; }
+        saved = saved.concat(d.saved || []);
+        done += batch.length;
+        progBar.style.width = Math.round(done / result.length * 100) + '%';
+        statusEl.textContent = `Uploading… ${done} / ${result.length}`;
+      }
+      progWrap.style.display = 'none';
+      statusEl.textContent = `✓ ${saved.length} file${saved.length !== 1 ? 's' : ''} uploaded`;
+    }
+    refreshDatasets();
+  } catch(e) {
+    statusEl.textContent = 'Upload error: ' + e;
+    progWrap.style.display = 'none';
+  }
+}
+
+// Drag-and-drop is not supported in pywebview — show a friendly message
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag');
+  document.getElementById('upload-status').textContent = 'Use the Files or Folder buttons to upload.';
+}
+
+async function indexDataset() {
+  if (!activeDataset) return;
+  const d = await api('build_index', activeDataset);
+  if (d.error) { alert(d.error); return; }
+  pollStatus();
 }
 
 // ── Search terms ──────────────────────────────────────────────────────────────
-function addTerm(value = "") {
-  const row = document.createElement("div");
-  row.className = "term-row";
+function addTerm(value = '') {
+  const row = document.createElement('div');
+  row.className = 'term-row';
   row.innerHTML = `
     <input type="text" placeholder='e.g. "project plan" AND NOT cancelled' value="${esc(value)}"
       onkeydown="if(event.key==='Enter') doSearch()">
     <button class="remove" onclick="this.parentElement.remove()">×</button>`;
-  document.getElementById("terms-container").appendChild(row);
-  row.querySelector("input").focus();
+  document.getElementById('terms-container').appendChild(row);
+  row.querySelector('input').focus();
 }
 
 function getTerms() {
-  return [...document.querySelectorAll(".term-row input")]
+  return [...document.querySelectorAll('.term-row input')]
     .map(i => i.value.trim()).filter(Boolean);
 }
 
 function clearTerms() {
-  document.getElementById("terms-container").innerHTML = "";
-  document.getElementById("results-area").innerHTML =
+  document.getElementById('terms-container').innerHTML = '';
+  document.getElementById('results-area').innerHTML =
     `<div class="empty-state"><div class="big-icon">⌕</div><p>Load a dataset and start searching</p></div>`;
-  document.getElementById("report-xlsx-btn").disabled = true;
-  document.getElementById("report-pdf-btn").disabled  = true;
+  document.getElementById('report-xlsx-btn').disabled = true;
+  document.getElementById('report-pdf-btn').disabled  = true;
   addTerm();
 }
 
 // ── Search ────────────────────────────────────────────────────────────────────
-function doSearch() {
+async function doSearch() {
   const terms = getTerms();
   if (!terms.length) return;
-  document.getElementById("loading").classList.add("show");
-  fetch("/search", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ terms })
-  })
-  .then(r => r.json())
-  .then(data => {
+  document.getElementById('loading').classList.add('show');
+  try {
+    const data = await api('search', terms);
+    if (data.error) { alert('Search error: ' + data.error); return; }
     currentResults = data.results;
     renderResults(data);
-    // Enable hit report buttons now that we have results
-    document.getElementById("report-xlsx-btn").disabled = false;
-    document.getElementById("report-pdf-btn").disabled  = false;
-  })
-  .catch(e => alert("Search error: " + e))
-  .finally(() => document.getElementById("loading").classList.remove("show"));
+    document.getElementById('report-xlsx-btn').disabled = false;
+    document.getElementById('report-pdf-btn').disabled  = false;
+  } catch(e) {
+    alert('Search error: ' + e);
+  } finally {
+    document.getElementById('loading').classList.remove('show');
+  }
 }
 
 function renderResults(data) {
-  const area = document.getElementById("results-area");
-  area.innerHTML = "";
+  const area = document.getElementById('results-area');
+  area.innerHTML = '';
   const terms = Object.keys(data.results || {});
   if (!terms.length) {
     area.innerHTML = `<div class="empty-state"><div class="big-icon">🤷</div><p>No terms searched</p></div>`;
@@ -849,17 +804,17 @@ function renderResults(data) {
   terms.forEach(term => {
     const r    = data.results[term];
     const hits = r.total_hits || 0;
-    const card = document.createElement("div");
-    card.className = "result-card";
+    const card = document.createElement('div');
+    card.className = 'result-card';
     card.innerHTML = `
       <div class="result-header" onclick="toggleCard(this)">
         <span class="result-term">${esc(term)}</span>
-        <span class="badge ${hits===0?'zero':''}">${hits.toLocaleString()} chunk${hits!==1?'s':''}</span>
+        <span class="badge ${hits===0?'zero':''}"> ${hits.toLocaleString()} chunk${hits!==1?'s':''}</span>
         <span class="chevron">▶</span>
       </div>
       <div class="result-body">
         <div class="result-body-inner">
-          ${r.error ? `<p style="color:var(--danger)">Error: ${esc(r.error)}</p>` : ""}
+          ${r.error ? `<p style="color:var(--danger)">Error: ${esc(r.error)}</p>` : ''}
           ${hits > 0 ? `
           <div class="export-row">
             <button class="btn btn-export" onclick='doExport(${JSON.stringify(term)})'>
@@ -876,13 +831,10 @@ function renderResults(data) {
                     const pageMatch = c.match(/^p(\d+)$/);
                     const pageNum   = pageMatch ? parseInt(pageMatch[1]) : null;
                     const dataset   = data.dataset || activeDataset;
-                    // Normalize backslashes to forward slashes for URL
-                    const docPath   = d.name.replace(/\\/g, '/');
-                    const url       = `/preview/${encodeURIComponent(dataset)}/${docPath.split('/').map(encodeURIComponent).join('/')}${pageNum ? '#page=' + pageNum : ''}`;
-                    return `<a class="chunk-tag" href="${url}" target="_blank" title="Open ${esc(d.name)} at ${c}">${esc(c)}</a>`;
-                  }).join("")}</td>
+                    return `<span class="chunk-tag" onclick="openFile('${esc(dataset)}','${esc(d.name)}',${pageNum||'null'})" title="Open ${esc(d.name)} at ${esc(c)}">${esc(c)}</span>`;
+                  }).join('')}</td>
                   <td>${d.chunks.length}</td>
-                </tr>`).join("")}
+                </tr>`).join('')}
             </tbody>
           </table>` : `<div class="no-results">No matches found</div>`}
         </div>
@@ -893,66 +845,50 @@ function renderResults(data) {
 
 function toggleCard(header) {
   const body = header.nextElementSibling;
-  const chev = header.querySelector(".chevron");
-  const open = body.classList.toggle("open");
-  chev.classList.toggle("open", open);
+  const chev = header.querySelector('.chevron');
+  const open = body.classList.toggle('open');
+  chev.classList.toggle('open', open);
 }
 
-function doHitReport(fmt) {
+async function openFile(dataset, docName, pageNum) {
+  const d = await api('open_file', dataset, docName, pageNum);
+  if (d.error) alert('Could not open file: ' + d.error);
+}
+
+async function doHitReport(fmt) {
   if (!currentResults || !Object.keys(currentResults).length) {
-    alert("Run a search first.");
+    alert('Run a search first.');
     return;
   }
-  document.getElementById("loading").classList.add("show");
-  fetch("/hit_report", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ results: currentResults, format: fmt })
-  })
-  .then(resp => {
-    if (!resp.ok) return resp.json().then(e => { throw new Error(e.error); });
-    return resp.blob();
-  })
-  .then(blob => {
-    const ext = fmt === "pdf" ? "pdf" : "xlsx";
-    const a   = document.createElement("a");
-    a.href     = URL.createObjectURL(blob);
-    a.download = `hit_report.${ext}`;
-    a.click();
-  })
-  .catch(e => alert("Hit report error: " + e.message))
-  .finally(() => document.getElementById("loading").classList.remove("show"));
+  document.getElementById('loading').classList.add('show');
+  try {
+    const d = await api('export_hit_report', currentResults, fmt);
+    if (d.error) alert('Hit report error: ' + d.error);
+    // File opens automatically in system viewer
+  } catch(e) {
+    alert('Hit report error: ' + e);
+  } finally {
+    document.getElementById('loading').classList.remove('show');
+  }
 }
 
-function doExport(term) {
+async function doExport(term) {
   const r = currentResults[term];
   if (!r) return;
-  fetch("/export", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ term, docs: r.docs })
-  })
-  .then(resp => {
-    if (!resp.ok) return resp.json().then(e => { throw new Error(e.error); });
-    return resp.blob();
-  })
-  .then(blob => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `search_${term.replace(/[^a-zA-Z0-9_\- ]/g,"_").slice(0,50)}.pdf`;
-    a.click();
-  })
-  .catch(e => alert("Export error: " + e.message));
+  const d = await api('export_search_pdf', term, r.docs, activeDataset);
+  if (d.error) alert('Export error: ' + d.error);
 }
 
 function esc(s) {
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 addTerm();
-refreshDatasets();
-pollStatus();
+waitForApi().then(() => {
+  refreshDatasets();
+  pollStatus();
+});
 </script>
 </body>
 </html>

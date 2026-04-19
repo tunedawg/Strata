@@ -274,6 +274,17 @@ tr:hover td { background: rgba(255,255,255,0.015); }
 <div id="loading"><div class="spinner-ring"></div></div>
 
 <script>
+function waitForApi() {
+  return new Promise(resolve => {
+    if (window.pywebview && window.pywebview.api) { resolve(); return; }
+    window.addEventListener('pywebviewready', () => resolve(), { once: true });
+  });
+}
+async function api(method, ...args) {
+  await waitForApi();
+  return window.pywebview.api[method](...args);
+}
+
 /* ─────────────────────────────────────────
    State
 ───────────────────────────────────────── */
@@ -285,15 +296,14 @@ let scanDataset  = "";
    Init
 ───────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded', () => {
-  loadDatasets();
+  waitForApi().then(() => loadDatasets());
 });
 
 async function loadDatasets() {
   try {
-    const r = await fetch('/datasets');
-    const data = await r.json();
+    const _dsresp = await api('get_datasets');
     const sel = document.getElementById('dataset-select');
-    const list = Array.isArray(data) ? data : (data.datasets || []);
+    const list = _dsresp.datasets || [];
     const indexed = list.filter(d => typeof d === 'object' ? d.indexed : true);
     if (!indexed.length) {
       sel.innerHTML = '<option value="">— No indexed datasets —</option>';
@@ -333,13 +343,8 @@ async function startScan() {
   showProgress(true);
 
   try {
-    const r = await fetch('/redactions/scan', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ dataset: ds })
-    });
-    const d = await r.json();
-    if (d.status === 'started' || d.status === 'running') {
+    const d = await api('start_redaction_scan', ds);
+    if (d.status === 'started' || d.status === 'running' || d.ok) {
       pollTimer = setInterval(pollStatus, 1200);
     } else {
       showError(d.error || 'Could not start scan');
@@ -353,8 +358,7 @@ async function startScan() {
 
 async function pollStatus() {
   try {
-    const r = await fetch('/redactions/status');
-    const d = await r.json();
+    const d = await api('get_redaction_status');
 
     const pct = d.percent || 0;
     document.getElementById('prog-bar').style.width = pct + '%';
@@ -381,14 +385,13 @@ async function pollStatus() {
 }
 
 async function cancelScan() {
-  try { await fetch('/redactions/cancel', { method: 'POST' }); }
+  try { await api('cancel_redaction_scan'); }
   catch(e) {}
 }
 
 async function loadResults() {
   try {
-    const r = await fetch('/redactions/results');
-    const data = await r.json();
+    const data = await api('get_redaction_results');
     scanResults = data;
     renderResults(data);
     resetScanUI();
@@ -457,7 +460,7 @@ function buildDocCard(doc) {
     <div class="doc-card-header" onclick="toggleCard(this)">
       <span class="doc-icon">${icon}</span>
       ${scanDataset && doc.filename.toLowerCase().endsWith('.pdf')
-        ? `<a class="doc-name" href="/preview/${encodeURIComponent(scanDataset)}/${(doc.filename).split('/').map(encodeURIComponent).join('/')}" target="_blank" title="Open ${esc(doc.filename)}" style="text-decoration:none;color:var(--text)">${esc(doc.filename)}</a>`
+        ? `<span class="doc-name" onclick="openFile(scanDataset,doc.filename,null)" title="Open ${esc(doc.filename)}" style="cursor:pointer;color:var(--text)">${esc(doc.filename)}</span>`
         : `<span class="doc-name" title="${esc(doc.filepath || doc.filename)}">${esc(doc.filename)}</span>`
       }
       <span class="finding-badge ${badgeClass}">${badgeText}</span>
@@ -494,7 +497,7 @@ function buildFindingsTable(doc) {
       : null;
     const pageCell = pageNum != null
       ? (previewUrl
-          ? `<a href="${previewUrl}" target="_blank" title="Open page ${pageNum}" style="color:var(--accent);text-decoration:none;font-family:var(--mono);font-size:0.78rem;">Page ${pageNum}</a>`
+          ? `<span onclick="openFile(scanDataset,doc.filename,${pageNum})" title="Open page ${pageNum}" style="color:var(--accent);cursor:pointer;font-family:var(--mono);font-size:0.78rem;">Page ${pageNum}</span>`
           : `Page ${pageNum}`)
       : '—';
     const loc     = f.location || (f.bbox ? formatBbox(f.bbox) : '—');
@@ -553,12 +556,9 @@ async function exportZip() {
   if (!scanResults) return;
   showLoading(true);
   try {
-    const r = await fetch('/redactions/export_zip', { method: 'POST' });
-    if (!r.ok) { const d = await r.json(); showError(d.error || 'Export failed'); }
-    else {
-      const blob = await r.blob();
-      triggerDownload(blob, 'redacted_documents.zip');
-    }
+    const _ez = await api('export_redaction_zip');
+    if (_ez.error) showError(_ez.error);
+    // file opens automatically
   } catch(e) { showError(e.message); }
   showLoading(false);
 }
@@ -567,12 +567,9 @@ async function exportList() {
   if (!scanResults) return;
   showLoading(true);
   try {
-    const r = await fetch('/redactions/export_list', { method: 'POST' });
-    if (!r.ok) { const d = await r.json(); showError(d.error || 'Export failed'); }
-    else {
-      const blob = await r.blob();
-      triggerDownload(blob, 'redaction_findings_list.xlsx');
-    }
+    const _el = await api('export_redaction_list');
+    if (_el.error) showError(_el.error);
+    // file opens automatically
   } catch(e) { showError(e.message); }
   showLoading(false);
 }
@@ -581,12 +578,9 @@ async function exportReportXlsx() {
   if (!scanResults) return;
   showLoading(true);
   try {
-    const r = await fetch('/redactions/export_report?format=xlsx', { method: 'POST' });
-    if (!r.ok) { const d = await r.json(); showError(d.error || 'Export failed'); }
-    else {
-      const blob = await r.blob();
-      triggerDownload(blob, 'redaction_report.xlsx');
-    }
+    const _erx = await api('export_redaction_report', 'xlsx');
+    if (_erx.error) showError(_erx.error);
+    // file opens automatically
   } catch(e) { showError(e.message); }
   showLoading(false);
 }
@@ -595,12 +589,9 @@ async function exportReportPdf() {
   if (!scanResults) return;
   showLoading(true);
   try {
-    const r = await fetch('/redactions/export_report?format=pdf', { method: 'POST' });
-    if (!r.ok) { const d = await r.json(); showError(d.error || 'Export failed'); }
-    else {
-      const blob = await r.blob();
-      triggerDownload(blob, 'redaction_report.pdf');
-    }
+    const _erp = await api('export_redaction_report', 'pdf');
+    if (_erp.error) showError(_erp.error);
+    // file opens automatically
   } catch(e) { showError(e.message); }
   showLoading(false);
 }
@@ -647,6 +638,15 @@ function showError(msg) {
 function esc(s) {
   if (s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+async function openFile(dataset, docName, pageNum) {
+  if (!dataset || !docName) return;
+  const d = await api('open_file', dataset, docName, pageNum);
+  if (d && d.error) alert('Could not open file: ' + d.error);
+}
+function navigate(page) {
+  const base = window.location.href.replace(/[^/]+$/, '');
+  window.location.href = base + page;
 }
 </script>
 </body>
