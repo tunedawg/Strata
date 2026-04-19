@@ -20,7 +20,7 @@ def get_data_dir():
     docs = os.path.join(os.path.expanduser("~"), "Documents")
     if not os.path.isdir(docs):
         docs = os.path.expanduser("~")
-    data_dir = os.path.join(docs, "UniversalSearch")
+    data_dir = os.path.join(docs, "Strata")
     os.makedirs(data_dir, exist_ok=True)
     return data_dir
 

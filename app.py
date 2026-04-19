@@ -1030,17 +1030,19 @@ class Api:
 
     def upload_folder(self, dataset_name, file_paths, base_folder):
         """
-        For folder uploads: file_paths is a list of absolute paths,
-        base_folder is the root folder path to compute relative paths from.
+        Walks base_folder recursively and copies all supported files
+        into the dataset folder, preserving relative structure.
         """
         folder = Path(DATASETS_DIR) / dataset_name
         if not folder.exists():
             return {"error": "Dataset not found"}
         base = Path(base_folder)
         saved = []
-        for src_path in (file_paths or []):
-            src = Path(src_path)
+        # Walk the folder recursively
+        for src in base.rglob("*"):
             if not src.is_file():
+                continue
+            if src.suffix.lower() not in EXTRACTORS:
                 continue
             try:
                 rel  = src.relative_to(base)
@@ -1049,7 +1051,7 @@ class Api:
                 shutil.copy2(str(src), str(dest))
                 saved.append(str(rel))
             except Exception as e:
-                print(f"  Upload error {src_path}: {e}")
+                print(f"  Upload error {src}: {e}")
         return {"ok": True, "saved": saved}
 
     def build_index(self, dataset_name):
@@ -1196,6 +1198,30 @@ class Api:
                     zf.write(str(src_path), arcname="files/" + rel_path.replace("\\","/"))
 
         return {"ok": True, "path": self._open_export(zip_path)}
+
+    def pick_files(self):
+        """Open a native file picker and return selected file paths."""
+        import webview
+        result = webview.windows[0].create_file_dialog(
+            webview.OPEN_DIALOG,
+            allow_multiple=True,
+            file_types=(
+                'Documents (*.pdf;*.docx;*.doc;*.pptx;*.ppt;*.csv;*.xlsx;*.xls;*.txt;*.md;*.rtf;*.eml;*.msg;*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.bmp)',
+                'All files (*.*)'
+            )
+        )
+        return list(result) if result else []
+
+    def pick_folder(self):
+        """Open a native folder picker and return the selected folder path."""
+        import webview
+        result = webview.windows[0].create_file_dialog(
+            webview.FOLDER_DIALOG,
+            allow_multiple=False
+        )
+        if result and len(result) > 0:
+            return result[0]
+        return None
 
     def open_exports_folder(self):
         """Reveal the exports folder in the system file manager."""

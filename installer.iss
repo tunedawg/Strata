@@ -64,7 +64,7 @@ var
 begin
   if CurStep = ssDone then
   begin
-    DataPath := ExpandConstant('{userdocs}') + '\UniversalSearch';
+    DataPath := ExpandConstant('{userdocs}') + '\Strata';
     MsgBox(
       'Installation complete!' + #13#10 + #13#10 +
       'Your productions and exports will be saved to:' + #13#10 +

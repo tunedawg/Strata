@@ -298,16 +298,7 @@ aside {
   letter-spacing: 0.12em;
 }
 
-.upload-zone {
-  border: 1px dashed var(--border2);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-  text-align: center;
-  cursor: default;
-  font-size: 0.75rem;
-  color: var(--text2);
-  line-height: 1.5;
-}
+
 
 .upload-btns {
   display: grid;
@@ -325,18 +316,19 @@ aside {
   min-height: 16px;
 }
 .upload-prog-track {
-  height: 2px;
+  height: 4px;
   background: var(--surface3);
-  border-radius: 1px;
+  border-radius: 2px;
   overflow: hidden;
   display: none;
+  margin-top: 2px;
 }
 #upload-prog-bar {
   height: 100%;
-  background: var(--accent);
-  border-radius: 1px;
   width: 0%;
-  transition: width 0.2s;
+  border-radius: 2px;
+  transition: width 0.25s ease, background-color 0.4s ease;
+  background: #ef4444;
 }
 
 /* ── Buttons ─────────────────────────────────────────────── */
@@ -842,9 +834,6 @@ tr:hover td { background: rgba(255,255,255,0.015); color: var(--text); }
 
     <div class="upload-panel" id="upload-section">
       <div class="upload-panel-title" id="upload-title">Files</div>
-      <div class="upload-zone">
-        PDF · DOCX · XLSX · EML · MSG · PPTX · TXT · images
-      </div>
       <div class="upload-btns">
         <button class="btn btn-ghost btn-sm" onclick="pickAndUpload(false)">📄 Add Files</button>
         <button class="btn btn-ghost btn-sm" onclick="pickAndUpload(true)">📁 Add Folder</button>
@@ -1028,54 +1017,51 @@ async function createDataset() {
 
 // ── Upload ────────────────────────────────────────────────────────────────────
 // pywebview provides a native file/folder picker dialog.
-// OPEN_DIALOG = 10, FOLDER_DIALOG = 20 (pywebview constants)
-const OPEN_DIALOG   = 10;
-const FOLDER_DIALOG = 20;
-
 async function pickAndUpload(folder) {
   if (!activeDataset) return;
-  await waitForApi();
   const statusEl = document.getElementById('upload-status');
   const progWrap = document.getElementById('upload-prog-wrap');
   const progBar  = document.getElementById('upload-prog-bar');
 
   try {
     if (folder) {
-      // Pick a folder — returns a single string (the folder path) or null
-      const result = await window.pywebview.windows[0].create_file_dialog(
-        FOLDER_DIALOG
-      );
-      if (!result || !result.length) return;
-      const folderPath = result[0];
+      statusEl.textContent = 'Opening folder picker…';
+      const folderPath = await api('pick_folder');
+      if (!folderPath) { statusEl.textContent = ''; return; }
       statusEl.textContent = 'Reading folder…';
-
-      // Ask Python to walk the folder and upload everything
       const d = await api('upload_folder', activeDataset, null, folderPath);
       if (d.error) { statusEl.textContent = 'Error: ' + d.error; return; }
       statusEl.textContent = `✓ ${d.saved.length} file${d.saved.length !== 1 ? 's' : ''} uploaded`;
     } else {
-      // Pick individual files — returns array of paths
-      const result = await window.pywebview.windows[0].create_file_dialog(
-        OPEN_DIALOG, undefined, true,
-        'Documents (*.pdf;*.docx;*.doc;*.pptx;*.ppt;*.csv;*.xlsx;*.xls;*.txt;*.md;*.rtf;*.eml;*.msg;*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.bmp)'
-      );
-      if (!result || !result.length) return;
+      statusEl.textContent = 'Opening file picker…';
+      const paths = await api('pick_files');
+      if (!paths || !paths.length) { statusEl.textContent = ''; return; }
 
-      statusEl.textContent = `Uploading ${result.length} file${result.length !== 1 ? 's' : ''}…`;
-      progWrap.style.display = 'block'; progBar.style.width = '0%';
+      statusEl.textContent = `Uploading ${paths.length} file${paths.length !== 1 ? 's' : ''}…`;
+      progWrap.style.display = 'block';
+      progBar.style.width = '0%';
+      progBar.style.backgroundColor = '#ef4444';
 
-      // Upload in batches of 50 paths at a time
       const BATCH = 50;
       let saved = [], done = 0;
-      for (let i = 0; i < result.length; i += BATCH) {
-        const batch = result.slice(i, i + BATCH);
+      for (let i = 0; i < paths.length; i += BATCH) {
+        const batch = paths.slice(i, i + BATCH);
         const d     = await api('upload_files', activeDataset, batch);
         if (d.error) { statusEl.textContent = 'Error: ' + d.error; progWrap.style.display = 'none'; return; }
         saved = saved.concat(d.saved || []);
         done += batch.length;
-        progBar.style.width = Math.round(done / result.length * 100) + '%';
-        statusEl.textContent = `Uploading… ${done} / ${result.length}`;
+        const pct = Math.round(done / paths.length * 100);
+        progBar.style.width = pct + '%';
+        // Interpolate red → yellow → green
+        const r = Math.round(239 - (239 - 34)  * (pct / 100));
+        const g = Math.round(68  + (197 - 68)  * (pct / 100));
+        const b = Math.round(68  + (94  - 68)  * (pct / 100));
+        progBar.style.backgroundColor = `rgb(${r},${g},${b})`;
+        statusEl.textContent = `Uploading… ${done} / ${paths.length}`;
       }
+      progBar.style.width = '100%';
+      progBar.style.backgroundColor = '#22c55e';
+      await new Promise(r => setTimeout(r, 600));
       progWrap.style.display = 'none';
       statusEl.textContent = `✓ ${saved.length} file${saved.length !== 1 ? 's' : ''} uploaded`;
     }
@@ -1087,11 +1073,7 @@ async function pickAndUpload(folder) {
 }
 
 // Drag-and-drop is not supported in pywebview — show a friendly message
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('drop-zone').classList.remove('drag');
-  document.getElementById('upload-status').textContent = 'Use the Files or Folder buttons to upload.';
-}
+// drag and drop not supported in pywebview
 
 async function indexDataset() {
   if (!activeDataset) return;
