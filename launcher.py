@@ -120,11 +120,12 @@ def main():
     print(f"  Server URL  : {url}")
     print("=" * 54)
 
-    # Set Edge WebView2 user data dir to a writable location
-    # (MSIX sandbox blocks writes to Temp, which is the default)
+    # Set Edge WebView2 user data dir via environment variable
+    # (MSIX sandbox blocks writes to Temp, which is WebView2's default)
     appdata = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
     webview_data_dir = os.path.join(appdata, "Strata", "WebView2")
     os.makedirs(webview_data_dir, exist_ok=True)
+    os.environ["WEBVIEW2_USER_DATA_FOLDER"] = webview_data_dir
 
     window = webview.create_window(
         title     = "Strata",
@@ -136,7 +137,7 @@ def main():
         resizable = True,
     )
 
-    webview.start(debug=False, user_data_dir=webview_data_dir)
+    webview.start(debug=False)
 
 
 if __name__ == "__main__":
