@@ -320,7 +320,8 @@ function waitForApi() {
   });
 }
 function _checkApi() {
-  if (window.pywebview && window.pywebview.api) {
+  if (window.pywebview && window.pywebview.api &&
+      typeof window.pywebview.api.get_datasets === 'function') {
     _apiReady = true;
     _apiResolvers.forEach(r => r());
     _apiResolvers = [];
@@ -336,6 +337,10 @@ window.addEventListener('pywebviewready', () => {
 _checkApi();
 async function api(method, ...args) {
   await waitForApi();
+  if (typeof window.pywebview.api[method] !== 'function') {
+    console.error('[Strata] method not found:', method, '| available:', Object.keys(window.pywebview.api));
+    return { error: 'Method not found: ' + method };
+  }
   return window.pywebview.api[method](...args);
 }
 
@@ -373,10 +378,14 @@ async function loadDatasets() {
       const files = typeof d === 'object' ? d.files : '';
       opt.value = name;
       opt.textContent = files ? `${name} (${files} files)` : name;
-      if (name === loaded) opt.selected = true;
       sel.appendChild(opt);
     });
-    if (loaded) document.getElementById('scan-btn').disabled = false;
+    // Auto-select: prefer already-loaded, otherwise first if only one
+    const autoSelect = loaded || (indexed.length === 1 ? (typeof indexed[0] === 'object' ? indexed[0].name : indexed[0]) : null);
+    if (autoSelect) {
+      sel.value = autoSelect;
+      document.getElementById('scan-btn').disabled = false;
+    }
   } catch(e) { console.error('loadDatasets', e); }
 }
 

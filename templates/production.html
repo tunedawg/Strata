@@ -391,7 +391,8 @@ function waitForApi() {
   });
 }
 function _checkApi() {
-  if (window.pywebview && window.pywebview.api) {
+  if (window.pywebview && window.pywebview.api &&
+      typeof window.pywebview.api.get_datasets === 'function') {
     _apiReady = true;
     _apiResolvers.forEach(r => r());
     _apiResolvers = [];
@@ -407,6 +408,10 @@ window.addEventListener('pywebviewready', () => {
 _checkApi();
 async function api(method, ...args) {
   await waitForApi();
+  if (typeof window.pywebview.api[method] !== 'function') {
+    console.error('[Strata] method not found:', method, '| available:', Object.keys(window.pywebview.api));
+    return { error: 'Method not found: ' + method };
+  }
   return window.pywebview.api[method](...args);
 }
 function navigate(page) {
@@ -433,11 +438,13 @@ async function init() {
       api('get_index_status')
     ]);
     const datasets = dsResp.datasets || [];
-    const loaded   = statusResp.loaded || null;  // already-active dataset name
+    const loaded   = statusResp.loaded || null;
+    console.log('[Strata] datasets:', datasets, 'loaded:', loaded);
     const sel = document.getElementById('dataset-select');
     const indexed = datasets.filter(ds => ds.indexed);
     if (!indexed.length) {
       sel.innerHTML = '<option value="">— No indexed datasets found —</option>';
+      console.log('[Strata] no indexed datasets found');
       return;
     }
     sel.innerHTML = '<option value="">— Select a production —</option>';
@@ -445,12 +452,15 @@ async function init() {
       const opt = document.createElement('option');
       opt.value = ds.name;
       opt.textContent = ds.name + ' (' + ds.files + ' file' + (ds.files !== 1 ? 's' : '') + ')';
-      if (ds.name === loaded) opt.selected = true;
       sel.appendChild(opt);
     });
-    // If one was already loaded, activate it
-    if (loaded && indexed.find(ds => ds.name === loaded)) {
-      prodDataset = loaded;
+    // Auto-select: prefer already-loaded dataset, otherwise pick first indexed
+    const autoSelect = (loaded && indexed.find(ds => ds.name === loaded))
+      ? loaded
+      : (indexed.length === 1 ? indexed[0].name : null);
+    if (autoSelect) {
+      sel.value  = autoSelect;
+      prodDataset = autoSelect;
       document.getElementById('prod-search-btn').disabled = false;
     }
   } catch(e) {
@@ -728,7 +738,9 @@ function esc(s) {
     .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-init();
+window.addEventListener('DOMContentLoaded', () => {
+  waitForApi().then(() => init());
+});
 </script>
 </body>
 </html>

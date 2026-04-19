@@ -739,7 +739,8 @@ function waitForApi() {
   });
 }
 function _checkApi() {
-  if (window.pywebview && window.pywebview.api) {
+  if (window.pywebview && window.pywebview.api &&
+      typeof window.pywebview.api.get_datasets === 'function') {
     _apiReady = true;
     _apiResolvers.forEach(r => r());
     _apiResolvers = [];
@@ -756,6 +757,10 @@ _checkApi();
 
 async function api(method, ...args) {
   await waitForApi();
+  if (typeof window.pywebview.api[method] !== 'function') {
+    console.error('[Strata] method not found:', method, '| available:', Object.keys(window.pywebview.api));
+    return { error: 'Method not found: ' + method };
+  }
   return window.pywebview.api[method](...args);
 }
 
