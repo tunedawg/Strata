@@ -701,7 +701,7 @@ async function pickAndUpload(folder) {
     if (folder) {
       // Pick a folder — returns a single string (the folder path) or null
       const result = await window.pywebview.windows[0].create_file_dialog(
-        FOLDER_DIALOG, allow_multiple=false
+        FOLDER_DIALOG
       );
       if (!result || !result.length) return;
       const folderPath = result[0];
@@ -714,8 +714,8 @@ async function pickAndUpload(folder) {
     } else {
       // Pick individual files — returns array of paths
       const result = await window.pywebview.windows[0].create_file_dialog(
-        OPEN_DIALOG, allow_multiple=true,
-        file_types=('Documents (*.pdf;*.docx;*.doc;*.pptx;*.ppt;*.csv;*.xlsx;*.xls;*.txt;*.md;*.rtf;*.eml;*.msg;*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.bmp)',)
+        OPEN_DIALOG, undefined, true,
+        'Documents (*.pdf;*.docx;*.doc;*.pptx;*.ppt;*.csv;*.xlsx;*.xls;*.txt;*.md;*.rtf;*.eml;*.msg;*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.bmp)'
       );
       if (!result || !result.length) return;
 

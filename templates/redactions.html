@@ -156,10 +156,9 @@ tr:hover td { background: rgba(255,255,255,0.015); }
     </div>
   </div>
   <nav style="display:flex;gap:4px;margin-left:24px;">
-    <a href="/" class="nav-link">📇 Index</a>
-    <a href="/production" class="nav-link">📦 Production</a>
-    <a href="/redactions" class="nav-link active">◼ Redactions</a>
-    <a href="/log" class="nav-link">📋 Log</a>
+    <a href="#" onclick="navigate('index.html')" class="nav-link">📇 Index</a>
+    <a href="#" onclick="navigate('production.html')" class="nav-link">📦 Production</a>
+    <a href="#" class="nav-link active">◼ Redactions</a>
   </nav>
 </header>
 
@@ -609,13 +608,7 @@ async function exportReportPdf() {
 /* ─────────────────────────────────────────
    Helpers
 ───────────────────────────────────────── */
-function triggerDownload(blob, name) {
-  const url = URL.createObjectURL(blob);
-  const a   = document.createElement('a');
-  a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 300);
-}
+// triggerDownload removed — exports open automatically via os.startfile
 
 function setResultsArea(html) {
   document.getElementById('results-area').innerHTML = html;
