@@ -1188,7 +1188,7 @@ class Api:
         except Exception as e:
             return {"error": str(e)}
 
-def export_production_zip(self, dataset_name, selections):
+    def export_production_zip(self, dataset_name, selections):
         _track("Production Export", {"doc_count": len(selections) if selections else 0})
         import openpyxl
         from openpyxl.styles import Font, PatternFill, Alignment
