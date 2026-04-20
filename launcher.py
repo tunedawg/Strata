@@ -134,6 +134,7 @@ def get_data_dir():
 # ── 5. Set env vars before importing app ─────────────────────────────────────
 os.environ["UNIVERSAL_SEARCH_DATA"] = get_data_dir()
 
+# PyInstaller bundles app.py inside _MEIPASS
 if hasattr(sys, "_MEIPASS"):
     sys.path.insert(0, sys._MEIPASS)
 
