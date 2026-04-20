@@ -11,6 +11,58 @@ import traceback
 import socket
 import http.server
 import ctypes
+import urllib.request
+import urllib.parse
+import json
+import uuid
+import platform
+
+MIXPANEL_TOKEN = "d8dafeb70e4d1eaff78262d01e1d3b83"
+
+def get_device_id():
+    """Get or create a persistent anonymous device ID."""
+    try:
+        appdata = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
+        id_file = os.path.join(appdata, "Strata", ".device_id")
+        os.makedirs(os.path.dirname(id_file), exist_ok=True)
+        if os.path.exists(id_file):
+            with open(id_file) as f:
+                return f.read().strip()
+        device_id = str(uuid.uuid4())
+        with open(id_file, "w") as f:
+            f.write(device_id)
+        return device_id
+    except Exception:
+        return str(uuid.uuid4())
+
+def track(event, properties=None):
+    """Send an event to Mixpanel. Runs in background, never blocks the app."""
+    def _send():
+        try:
+            device_id = get_device_id()
+            data = {
+                "event": event,
+                "properties": {
+                    "token":        MIXPANEL_TOKEN,
+                    "distinct_id":  device_id,
+                    "app_version":  "1.0.0",
+                    "os":           platform.system(),
+                    "os_version":   platform.version(),
+                    **(properties or {})
+                }
+            }
+            encoded = urllib.parse.urlencode({
+                "data": json.dumps(data)
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                "https://api.mixpanel.com/track",
+                data=encoded,
+                method="POST"
+            )
+            urllib.request.urlopen(req, timeout=3)
+        except Exception:
+            pass  # Never let analytics crash the app
+    threading.Thread(target=_send, daemon=True).start()
 
 def show_error(title, message):
     """Show a native Windows error dialog without requiring tkinter."""
@@ -99,6 +151,9 @@ except Exception as e:
 # ── 7. Main ───────────────────────────────────────────────────────────────────
 def main():
     import webview
+
+    # Track app launch
+    track("App Launched")
 
     data_dir     = os.environ["UNIVERSAL_SEARCH_DATA"]
     template_dir = resource_path("templates")

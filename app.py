@@ -16,8 +16,34 @@ Also install Tesseract OCR engine:
 """
 
 import os, re, sys, json, pickle, threading, time, difflib, email, shutil, zipfile, io
+import urllib.request, urllib.parse, uuid, platform
 from pathlib import Path
 from collections import defaultdict
+
+MIXPANEL_TOKEN = "d8dafeb70e4d1eaff78262d01e1d3b83"
+
+def _track(event, properties=None):
+    """Fire-and-forget Mixpanel event. Never blocks."""
+    def _send():
+        try:
+            id_file = os.path.join(
+                os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
+                "Strata", ".device_id"
+            )
+            device_id = open(id_file).read().strip() if os.path.exists(id_file) else "unknown"
+            data = {"event": event, "properties": {
+                "token": MIXPANEL_TOKEN, "distinct_id": device_id,
+                "app_version": "1.0.0", **(properties or {})
+            }}
+            req = urllib.request.Request(
+                "https://api.mixpanel.com/track",
+                data=urllib.parse.urlencode({"data": json.dumps(data)}).encode(),
+                method="POST"
+            )
+            urllib.request.urlopen(req, timeout=3)
+        except Exception:
+            pass
+    threading.Thread(target=_send, daemon=True).start()
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 _default_data = os.path.join(os.path.expanduser("~"), "Documents", "Strata")
@@ -1059,6 +1085,8 @@ class Api:
         folder = Path(DATASETS_DIR) / dataset_name
         if not folder.exists():
             return {"error": "Dataset not found"}
+        file_count = len([f for f in folder.rglob("*") if f.is_file() and not f.name.startswith("_")])
+        _track("Index Built", {"file_count": file_count})
         t = threading.Thread(target=build_index_for, args=(dataset_name,), daemon=True)
         t.start()
         return {"ok": True}
@@ -1080,13 +1108,17 @@ class Api:
     def search(self, terms):
         if not INDEX_READY:
             return {"error": "No dataset loaded"}
-        return {"results": run_search(terms), "dataset": LOADED_DATASET}
+        results = run_search(terms)
+        _track("Search Run", {"term_count": len(terms),
+            "total_hits": sum(r.get("total_hits",0) for r in results.values())})
+        return {"results": results, "dataset": LOADED_DATASET}
 
     def production_search(self, dataset_name, terms):
         if not dataset_name:
             return {"error": "dataset required"}
         try:
             results = search_dataset(dataset_name, terms)
+            _track("Production Search", {"term_count": len(terms)})
             return {"dataset": dataset_name, "results": results}
         except FileNotFoundError as e:
             return {"error": str(e)}
@@ -1156,7 +1188,8 @@ class Api:
         except Exception as e:
             return {"error": str(e)}
 
-    def export_production_zip(self, dataset_name, selections):
+def export_production_zip(self, dataset_name, selections):
+        _track("Production Export", {"doc_count": len(selections) if selections else 0})
         import openpyxl
         from openpyxl.styles import Font, PatternFill, Alignment
         if not dataset_name:
@@ -1248,6 +1281,7 @@ class Api:
             return {"error": "dataset required"}
         if not (Path(DATASETS_DIR) / dataset_name).exists():
             return {"error": "Dataset not found"}
+        _track("Redaction Scan Started")
         t = threading.Thread(target=run_redaction_scan, args=(dataset_name,), daemon=True)
         t.start()
         return {"status": "started"}

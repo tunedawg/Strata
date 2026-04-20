@@ -38,28 +38,25 @@ copy "%ROOT%\assets\Square50x50Logo.png"   "%STAGING%\assets\Square50x50Logo.png
 copy "%ROOT%\assets\Square150x150Logo.png" "%STAGING%\assets\Square150x150Logo.png"
 copy "%ROOT%\assets\Wide310x150Logo.png"   "%STAGING%\assets\Wide310x150Logo.png"
 
-REM ── Generate mapping file (avoids long path issues with /d flag) ──────────────
-echo  Generating file mapping...
-set MAPFILE=%ROOT%\msix_mapping.txt
-if exist "%MAPFILE%" del "%MAPFILE%"
-echo [Files] > "%MAPFILE%"
+REM ── Enable long paths via PowerShell before packing ──────────────────────────
+echo  Enabling long path support...
+powershell -Command "Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Value 1 -ErrorAction SilentlyContinue"
 
-REM Use PowerShell to generate the mapping file properly
-powershell -Command "$staging = '%STAGING%'; $map = '%MAPFILE%'; $lines = Get-ChildItem -Path $staging -Recurse -File | ForEach-Object { $rel = $_.FullName.Substring($staging.Length + 1); '\"' + $_.FullName + '\" \"' + $rel + '\"' }; $lines | Out-File -FilePath $map -Encoding ascii -Append"
-
-echo  Mapping file created.
-
-REM ── Pack using mapping file ───────────────────────────────────────────────────
+REM ── Pack ─────────────────────────────────────────────────────────────────────
 set MSIX=%ROOT%\dist\Strata.msix
 if exist "%MSIX%" del "%MSIX%"
-echo  Packing with mapping file...
-"%MAKEAPPX%" pack /f "%MAPFILE%" /p "%MSIX%" /nv
+echo  Packing...
+
+REM Use /l flag to allow long paths, /nv to skip validation
+"%MAKEAPPX%" pack /d "%STAGING%" /p "%MSIX%" /nv /l
 if errorlevel 1 (
-    echo.
-    echo  ERROR: makeappx failed with mapping file.
-    echo  Trying direct folder pack...
+    echo  Retrying without /l flag...
     "%MAKEAPPX%" pack /d "%STAGING%" /p "%MSIX%" /nv /o
-    if errorlevel 1 ( echo ERROR: Both methods failed. & pause & exit /b 1 )
+    if errorlevel 1 (
+        echo  Retrying with overwrite...
+        "%MAKEAPPX%" pack /d "%STAGING%" /p "%MSIX%" /o
+        if errorlevel 1 ( echo ERROR: makeappx failed. & pause & exit /b 1 )
+    )
 )
 echo  Created: dist\Strata.msix
 

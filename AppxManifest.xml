@@ -14,7 +14,7 @@
   <Properties>
     <DisplayName>Strata</DisplayName>
     <PublisherDisplayName>Noah Tunis</PublisherDisplayName>
-    <Logo>assets\Square50x50Logo.png</Logo>
+    <Logo>assets/Square50x50Logo.png</Logo>
   </Properties>
 
   <Dependencies>
@@ -31,9 +31,9 @@
         DisplayName="Strata"
         Description="Boolean keyword search across legal document productions."
         BackgroundColor="#080a0f"
-        Square150x150Logo="assets\Square150x150Logo.png"
-        Square44x44Logo="assets\Square44x44Logo.png">
-        <uap:DefaultTile Wide310x150Logo="assets\Wide310x150Logo.png"/>
+        Square150x150Logo="assets/Square150x150Logo.png"
+        Square44x44Logo="assets/Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="assets/Wide310x150Logo.png"/>
       </uap:VisualElements>
     </Application>
   </Applications>
