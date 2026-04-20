@@ -383,6 +383,7 @@
   ('altgraph.ObjectGraph',
    'C:\\Users\\noah\\AppData\\Local\\Python\\pythoncore-3.12-64\\Lib\\site-packages\\altgraph\\ObjectGraph.py',
    'PYMODULE'),
+  ('app', 'C:\\universal-search\\app.py', 'PYMODULE'),
   ('argparse',
    'C:\\Users\\noah\\AppData\\Local\\Python\\pythoncore-3.12-64\\Lib\\argparse.py',
    'PYMODULE'),
