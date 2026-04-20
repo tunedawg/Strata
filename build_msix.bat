@@ -38,12 +38,29 @@ copy "%ROOT%\assets\Square50x50Logo.png"   "%STAGING%\assets\Square50x50Logo.png
 copy "%ROOT%\assets\Square150x150Logo.png" "%STAGING%\assets\Square150x150Logo.png"
 copy "%ROOT%\assets\Wide310x150Logo.png"   "%STAGING%\assets\Wide310x150Logo.png"
 
-REM ── Pack ─────────────────────────────────────────────────────────────────────
+REM ── Generate mapping file (avoids long path issues with /d flag) ──────────────
+echo  Generating file mapping...
+set MAPFILE=%ROOT%\msix_mapping.txt
+if exist "%MAPFILE%" del "%MAPFILE%"
+echo [Files] > "%MAPFILE%"
+
+REM Use PowerShell to generate the mapping file properly
+powershell -Command "$staging = '%STAGING%'; $map = '%MAPFILE%'; $lines = Get-ChildItem -Path $staging -Recurse -File | ForEach-Object { $rel = $_.FullName.Substring($staging.Length + 1); '\"' + $_.FullName + '\" \"' + $rel + '\"' }; $lines | Out-File -FilePath $map -Encoding ascii -Append"
+
+echo  Mapping file created.
+
+REM ── Pack using mapping file ───────────────────────────────────────────────────
 set MSIX=%ROOT%\dist\Strata.msix
 if exist "%MSIX%" del "%MSIX%"
-echo  Packing...
-"%MAKEAPPX%" pack /d "%STAGING%" /p "%MSIX%" /nv
-if errorlevel 1 ( echo ERROR: makeappx failed. & pause & exit /b 1 )
+echo  Packing with mapping file...
+"%MAKEAPPX%" pack /f "%MAPFILE%" /p "%MSIX%" /nv
+if errorlevel 1 (
+    echo.
+    echo  ERROR: makeappx failed with mapping file.
+    echo  Trying direct folder pack...
+    "%MAKEAPPX%" pack /d "%STAGING%" /p "%MSIX%" /nv /o
+    if errorlevel 1 ( echo ERROR: Both methods failed. & pause & exit /b 1 )
+)
 echo  Created: dist\Strata.msix
 
 REM ── Sign ─────────────────────────────────────────────────────────────────────
@@ -55,12 +72,13 @@ if not exist "%PFX%" (
 if not "%SIGNTOOL%"=="" (
     echo  Signing...
     "%SIGNTOOL%" sign /fd SHA256 /a /f "%PFX%" /p StrataTest123 "%MSIX%"
+    if errorlevel 1 ( echo  WARNING: Signing failed. ) else ( echo  Signed. )
 )
 
 echo.
 echo  ============================================================
 echo   SUCCESS: dist\Strata.msix
-echo   Upload this to Partner Center for Store submission.
+echo   Upload to Partner Center for Store submission.
 echo  ============================================================
 echo.
 pause
