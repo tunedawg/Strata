@@ -45,7 +45,6 @@ hidden_imports = [
     "reportlab", "reportlab.lib", "reportlab.lib.pagesizes",
     "reportlab.platypus", "reportlab.lib.styles",
     # Stdlib
-    "tkinter", "tkinter.messagebox",
     "pickle", "threading", "pathlib", "zipfile", "io", "shutil",
     "xml.etree.ElementTree", "charset_normalizer", "cryptography",
 ]
@@ -70,7 +69,8 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=["matplotlib", "numpy", "pandas", "scipy", "IPython", "jupyter", "flask", "werkzeug"],
+    excludes=["matplotlib", "numpy", "pandas", "scipy", "IPython", "jupyter",
+               "flask", "werkzeug", "tkinter", "_tkinter", "tk", "tcl"],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,

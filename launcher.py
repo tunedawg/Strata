@@ -10,6 +10,14 @@ import threading
 import traceback
 import socket
 import http.server
+import ctypes
+
+def show_error(title, message):
+    """Show a native Windows error dialog without requiring tkinter."""
+    if sys.platform == "win32":
+        ctypes.windll.user32.MessageBoxW(0, str(message), str(title), 0x10)
+    else:
+        print(f"ERROR: {title}\n{message}", file=sys.stderr)
 
 
 # ── 1. Locate bundled resources ───────────────────────────────────────────────
@@ -83,10 +91,7 @@ try:
     import app as _app_module
     api = _app_module.Api()
 except Exception as e:
-    import tkinter as tk
-    from tkinter import messagebox
-    root = tk.Tk(); root.withdraw()
-    messagebox.showerror("Strata — Startup Error",
+    show_error("Strata — Startup Error",
         f"Failed to load application:\n\n{e}\n\n{traceback.format_exc()}")
     sys.exit(1)
 
@@ -99,10 +104,7 @@ def main():
     template_dir = resource_path("templates")
 
     if not os.path.exists(template_dir):
-        import tkinter as tk
-        from tkinter import messagebox
-        root = tk.Tk(); root.withdraw()
-        messagebox.showerror("Strata — Startup Error",
+        show_error("Strata — Startup Error",
             f"Could not find application files.\n\nExpected: {template_dir}\n\nPlease reinstall Strata.")
         sys.exit(1)
 
@@ -144,8 +146,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        import tkinter as tk
-        from tkinter import messagebox
-        root = tk.Tk(); root.withdraw()
-        messagebox.showerror("Strata — Error",
+        show_error("Strata — Error",
             f"Unexpected error:\n\n{e}\n\n{traceback.format_exc()}")
