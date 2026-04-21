@@ -32,6 +32,9 @@ echo  Compiling with Nuitka (this takes several minutes)...
   --output-dir=dist ^
   --include-data-dir=templates=templates ^
   --include-package=webview ^
+  --nofollow-import-to=webview.platforms.android ^
+  --nofollow-import-to=webview.platforms.cocoa ^
+  --nofollow-import-to=webview.platforms.gtk ^
   --include-package=pdfplumber ^
   --include-package=pypdf ^
   --include-package=docx ^
@@ -45,7 +48,6 @@ echo  Compiling with Nuitka (this takes several minutes)...
   --include-package=pdfminer ^
   --include-package=cryptography ^
   --include-package=charset_normalizer ^
-  --enable-plugin=no-qt ^
   --assume-yes-for-downloads ^
   launcher.py
 
