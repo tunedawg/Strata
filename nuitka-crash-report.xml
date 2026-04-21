@@ -1,25 +1,108 @@
 <?xml version='1.0' encoding='utf8'?>
-<nuitka-compilation-report nuitka_version="4.0.8" nuitka_commercial_version="not installed" mode="onefile" completion="error exit message (1)" exit_message="pywebview: Conflict between user and plugin decision for module 'webview.platforms.qt'.">
+<nuitka-compilation-report nuitka_version="4.0.8" nuitka_commercial_version="not installed" mode="onefile" completion="error exit message (1)" exit_message="pywebview: Conflict between user and plugin decision for module 'webview.platforms.cef'.">
   <performance>
-    <memory_usage name="after_launch" value="35807232" />
+    <memory_usage name="after_launch" value="35913728" />
   </performance>
-  <data_file name="templates\index.html" source="${cwd}\templates\index.html" size="46543" reason="specified data dir 'templates' on command line" tags="user,copy,data-dir-contents" />
-  <data_file name="templates\production.html" source="${cwd}\templates\production.html" size="40967" reason="specified data dir 'templates' on command line" tags="user,copy,data-dir-contents" />
-  <data_file name="templates\redactions.html" source="${cwd}\templates\redactions.html" size="45507" reason="specified data dir 'templates' on command line" tags="user,copy,data-dir-contents" />
+  <data_file name="templates\index.html" source="${cwd}\templates\index.html" size="46543" reason="specified data dir 'C:\universal-search\templates' on command line" tags="user,copy,data-dir-contents" />
+  <data_file name="templates\production.html" source="${cwd}\templates\production.html" size="40967" reason="specified data dir 'C:\universal-search\templates' on command line" tags="user,copy,data-dir-contents" />
+  <data_file name="templates\redactions.html" source="${cwd}\templates\redactions.html" size="45507" reason="specified data dir 'C:\universal-search\templates' on command line" tags="user,copy,data-dir-contents" />
+  <data_file name="webview\js\api.js" source="${sys.prefix}\Lib\site-packages\webview\js\api.js" size="8612" reason="package 'webview' package data" tags="user,package_data,copy" />
+  <data_file name="webview\js\customize.js" source="${sys.prefix}\Lib\site-packages\webview\js\customize.js" size="4443" reason="package 'webview' package data" tags="user,package_data,copy" />
+  <data_file name="webview\js\finish.js" source="${sys.prefix}\Lib\site-packages\webview\js\finish.js" size="357" reason="package 'webview' package data" tags="user,package_data,copy" />
+  <data_file name="webview\js\state.js" source="${sys.prefix}\Lib\site-packages\webview\js\state.js" size="1828" reason="package 'webview' package data" tags="user,package_data,copy" />
+  <data_file name="webview\js\lib\dom_json.js" source="${sys.prefix}\Lib\site-packages\webview\js\lib\dom_json.js" size="26097" reason="package 'webview' package data" tags="user,package_data,copy" />
+  <data_file name="webview\js\lib\polyfill.js" source="${sys.prefix}\Lib\site-packages\webview\js\lib\polyfill.js" size="27434" reason="package 'webview' package data" tags="user,package_data,copy" />
+  <data_file name="webview\lib\pywebview-android.jar" source="${sys.prefix}\Lib\site-packages\webview\lib\pywebview-android.jar" size="14309" reason="package 'webview' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\00readme.txt" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\00readme.txt" size="318" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\DarkGarden-changelog.txt" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\DarkGarden-changelog.txt" size="504" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\DarkGarden-copying-gpl.txt" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\DarkGarden-copying-gpl.txt" size="17976" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\DarkGarden-copying.txt" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\DarkGarden-copying.txt" size="1318" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\DarkGarden-readme.txt" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\DarkGarden-readme.txt" size="4122" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\DarkGarden.sfd" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\DarkGarden.sfd" size="519634" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\DarkGardenMK.afm" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\DarkGardenMK.afm" size="10351" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\DarkGardenMK.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\DarkGardenMK.pfb" size="79824" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\Vera.ttf" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\Vera.ttf" size="65932" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\VeraBI.ttf" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\VeraBI.ttf" size="63208" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\VeraBd.ttf" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\VeraBd.ttf" size="58716" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\VeraIt.ttf" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\VeraIt.ttf" size="63684" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\_a______.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\_a______.pfb" size="32084" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\_ab_____.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\_ab_____.pfb" size="31966" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\_abi____.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\_abi____.pfb" size="32019" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\_ai_____.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\_ai_____.pfb" size="32115" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\_eb_____.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\_eb_____.pfb" size="35377" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\_ebi____.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\_ebi____.pfb" size="38543" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\_ei_____.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\_ei_____.pfb" size="37518" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\_er_____.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\_er_____.pfb" size="35380" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\bitstream-vera-license.txt" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\bitstream-vera-license.txt" size="5954" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\callig15.afm" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\callig15.afm" size="8318" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\callig15.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\callig15.pfb" size="59663" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\cob_____.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\cob_____.pfb" size="35500" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\cobo____.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\cobo____.pfb" size="50532" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\com_____.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\com_____.pfb" size="34585" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\coo_____.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\coo_____.pfb" size="48468" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\hb-test.ttf" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\hb-test.ttf" size="3284" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\sy______.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\sy______.pfb" size="34705" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\zd______.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\zd______.pfb" size="49593" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\zx______.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\zx______.pfb" size="75573" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="reportlab\fonts\zy______.pfb" source="${sys.prefix}\Lib\site-packages\reportlab\fonts\zy______.pfb" size="96418" reason="package 'reportlab' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-comments.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-comments.xml" size="734" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-footer.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-footer.xml" size="1395" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-header.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-header.xml" size="1395" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-settings.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-settings.xml" size="1640" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-styles.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-styles.xml" size="15823" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default.docx" source="${sys.prefix}\Lib\site-packages\docx\templates\default.docx" size="38116" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\[Content_Types].xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\[Content_Types].xml" size="1782" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\_rels\.rels" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\_rels\.rels" size="748" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\customXml\item1.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\customXml\item1.xml" size="262" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\customXml\itemProps1.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\customXml\itemProps1.xml" size="354" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\customXml\_rels\item1.xml.rels" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\customXml\_rels\item1.xml.rels" size="300" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\docProps\app.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\docProps\app.xml" size="1132" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\docProps\core.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\docProps\core.xml" size="753" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\docProps\thumbnail.jpeg" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\docProps\thumbnail.jpeg" size="8324" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\word\document.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\word\document.xml" size="1594" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\word\fontTable.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\word\fontTable.xml" size="2811" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\word\numbering.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\word\numbering.xml" size="6747" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\word\settings.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\word\settings.xml" size="2749" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\word\styles.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\word\styles.xml" size="438677" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\word\stylesWithEffects.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\word\stylesWithEffects.xml" size="438131" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\word\webSettings.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\word\webSettings.xml" size="438" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\word\_rels\document.xml.rels" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\word\_rels\document.xml.rels" size="1253" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="docx\templates\default-docx-template\word\theme\theme1.xml" source="${sys.prefix}\Lib\site-packages\docx\templates\default-docx-template\word\theme\theme1.xml" size="10939" reason="package 'docx' package data" tags="user,package_data,copy" />
+  <data_file name="pptx\templates\default.pptx" source="${sys.prefix}\Lib\site-packages\pptx\templates\default.pptx" size="34030" reason="package 'pptx' package data" tags="user,package_data,copy" />
+  <data_file name="pptx\templates\docx-icon.emf" source="${sys.prefix}\Lib\site-packages\pptx\templates\docx-icon.emf" size="127228" reason="package 'pptx' package data" tags="user,package_data,copy" />
+  <data_file name="pptx\templates\generic-icon.emf" source="${sys.prefix}\Lib\site-packages\pptx\templates\generic-icon.emf" size="5396" reason="package 'pptx' package data" tags="user,package_data,copy" />
+  <data_file name="pptx\templates\notes.xml" source="${sys.prefix}\Lib\site-packages\pptx\templates\notes.xml" size="722" reason="package 'pptx' package data" tags="user,package_data,copy" />
+  <data_file name="pptx\templates\notesMaster.xml" source="${sys.prefix}\Lib\site-packages\pptx\templates\notesMaster.xml" size="11135" reason="package 'pptx' package data" tags="user,package_data,copy" />
+  <data_file name="pptx\templates\pptx-icon.emf" source="${sys.prefix}\Lib\site-packages\pptx\templates\pptx-icon.emf" size="5492" reason="package 'pptx' package data" tags="user,package_data,copy" />
+  <data_file name="pptx\templates\theme.xml" source="${sys.prefix}\Lib\site-packages\pptx\templates\theme.xml" size="10964" reason="package 'pptx' package data" tags="user,package_data,copy" />
+  <data_file name="pptx\templates\xlsx-icon.emf" source="${sys.prefix}\Lib\site-packages\pptx\templates\xlsx-icon.emf" size="130380" reason="package 'pptx' package data" tags="user,package_data,copy" />
   <data_composer blob_size="None" />
   <command_line>
     <option value="--standalone" />
     <option value="--onefile" />
     <option value="--windows-console-mode=disable" />
-    <option value="--windows-icon-from-ico=strata.ico" />
+    <option value="--windows-icon-from-ico=C:\universal-search\strata.ico" />
     <option value="--output-filename=Strata.exe" />
-    <option value="--output-dir=dist" />
-    <option value="--include-data-dir=templates=templates" />
+    <option value="--output-dir=C:\universal-search\dist" />
+    <option value="--include-data-dir=C:\universal-search\templates=templates" />
+    <option value="--include-module=app" />
+    <option value="--include-package-data=webview" />
+    <option value="--include-package-data=pdfplumber" />
+    <option value="--include-package-data=reportlab" />
+    <option value="--include-package-data=docx" />
+    <option value="--include-package-data=openpyxl" />
+    <option value="--include-package-data=pptx" />
     <option value="--include-package=webview" />
+    <option value="--include-package=webview.platforms.winforms" />
+    <option value="--include-package=webview.platforms.edgechromium" />
     <option value="--nofollow-import-to=webview.platforms.android" />
     <option value="--nofollow-import-to=webview.platforms.cocoa" />
     <option value="--nofollow-import-to=webview.platforms.gtk" />
+    <option value="--nofollow-import-to=webview.platforms.qt" />
+    <option value="--nofollow-import-to=webview.platforms.cef" />
+    <option value="--nofollow-import-to=webview.platforms.mshtml" />
     <option value="--include-package=pdfplumber" />
+    <option value="--include-package=pdfminer" />
     <option value="--include-package=pypdf" />
     <option value="--include-package=docx" />
     <option value="--include-package=openpyxl" />
@@ -29,11 +112,39 @@
     <option value="--include-package=pytesseract" />
     <option value="--include-package=pdf2image" />
     <option value="--include-package=extract_msg" />
-    <option value="--include-package=pdfminer" />
     <option value="--include-package=cryptography" />
     <option value="--include-package=charset_normalizer" />
+    <option value="--include-package=cffi" />
+    <option value="--include-package=csv" />
+    <option value="--include-package=email" />
+    <option value="--include-package=zipfile" />
+    <option value="--include-package=pickle" />
+    <option value="--include-package=difflib" />
+    <option value="--include-package=uuid" />
+    <option value="--include-package=platform" />
+    <option value="--include-package=http" />
+    <option value="--include-package=urllib" />
+    <option value="--include-package=json" />
+    <option value="--include-package=clr" />
+    <option value="--include-package=pythonnet" />
+    <option value="--include-package=comtypes" />
+    <option value="--nofollow-import-to=tkinter" />
+    <option value="--nofollow-import-to=_tkinter" />
+    <option value="--nofollow-import-to=matplotlib" />
+    <option value="--nofollow-import-to=numpy" />
+    <option value="--nofollow-import-to=pandas" />
+    <option value="--nofollow-import-to=scipy" />
+    <option value="--nofollow-import-to=PyQt5" />
+    <option value="--nofollow-import-to=PyQt6" />
+    <option value="--nofollow-import-to=PySide2" />
+    <option value="--nofollow-import-to=PySide6" />
+    <option value="--nofollow-import-to=wx" />
+    <option value="--nofollow-import-to=gi" />
+    <option value="--nofollow-import-to=gtk" />
+    <option value="--nofollow-import-to=IPython" />
+    <option value="--nofollow-import-to=jupyter" />
     <option value="--assume-yes-for-downloads" />
-    <option value="launcher.py" />
+    <option value="C:\universal-search\launcher.py" />
   </command_line>
   <plugins>
     <plugin name="anti-bloat" user_enabled="no" />
