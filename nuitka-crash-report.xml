@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf8'?>
-<nuitka-compilation-report nuitka_version="4.0.8" nuitka_commercial_version="not installed" mode="onefile" completion="error exit message (1)" exit_message="pywebview: Conflict between user and plugin decision for module 'webview.platforms.android'.">
+<nuitka-compilation-report nuitka_version="4.0.8" nuitka_commercial_version="not installed" mode="onefile" completion="error exit message (1)" exit_message="pywebview: Conflict between user and plugin decision for module 'webview.platforms.qt'.">
   <performance>
-    <memory_usage name="after_launch" value="36278272" />
+    <memory_usage name="after_launch" value="35807232" />
   </performance>
   <data_file name="templates\index.html" source="${cwd}\templates\index.html" size="46543" reason="specified data dir 'templates' on command line" tags="user,copy,data-dir-contents" />
   <data_file name="templates\production.html" source="${cwd}\templates\production.html" size="40967" reason="specified data dir 'templates' on command line" tags="user,copy,data-dir-contents" />
@@ -16,6 +16,9 @@
     <option value="--output-dir=dist" />
     <option value="--include-data-dir=templates=templates" />
     <option value="--include-package=webview" />
+    <option value="--nofollow-import-to=webview.platforms.android" />
+    <option value="--nofollow-import-to=webview.platforms.cocoa" />
+    <option value="--nofollow-import-to=webview.platforms.gtk" />
     <option value="--include-package=pdfplumber" />
     <option value="--include-package=pypdf" />
     <option value="--include-package=docx" />
@@ -29,7 +32,6 @@
     <option value="--include-package=pdfminer" />
     <option value="--include-package=cryptography" />
     <option value="--include-package=charset_normalizer" />
-    <option value="--enable-plugin=no-qt" />
     <option value="--assume-yes-for-downloads" />
     <option value="launcher.py" />
   </command_line>
@@ -46,7 +48,6 @@
     <plugin name="kivy" user_enabled="no" />
     <plugin name="matplotlib" user_enabled="no" />
     <plugin name="multiprocessing" user_enabled="no" />
-    <plugin name="no-qt" user_enabled="yes" />
     <plugin name="options-nanny" user_enabled="no" />
     <plugin name="pbr-compat" user_enabled="no" />
     <plugin name="pkg-resources" user_enabled="no" />

@@ -74,18 +74,49 @@ def show_error(title, message):
 
 # ── 1. Locate bundled resources ───────────────────────────────────────────────
 def resource_path(*parts):
+    """
+    Find resource files handling:
+    - Dev mode (running from source)
+    - PyInstaller (_MEIPASS)
+    - Nuitka onefile (__compiled__ + sys.executable dir)
+    - Nuitka standalone (next to exe)
+    """
     candidates = []
+
+    # PyInstaller
     if hasattr(sys, "_MEIPASS"):
         candidates.append(os.path.join(sys._MEIPASS, *parts))
+
+    # Nuitka onefile extracts to a temp dir next to the exe
+    # The exe itself is sys.executable
     exe_dir = os.path.dirname(os.path.abspath(sys.executable))
     candidates.append(os.path.join(exe_dir, *parts))
-    candidates.append(os.path.join(os.path.dirname(exe_dir), *parts))
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    candidates.append(os.path.join(script_dir, *parts))
+
+    # Nuitka standalone — resources next to the compiled exe
+    try:
+        # __compiled__ exists in Nuitka-compiled code
+        compiled_dir = os.path.dirname(os.path.abspath(__compiled__.__file__))
+        candidates.append(os.path.join(compiled_dir, *parts))
+    except NameError:
+        pass
+
+    # Dev mode — next to launcher.py
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        candidates.append(os.path.join(script_dir, *parts))
+    except NameError:
+        pass
+
+    # Nuitka onefile: resources extracted to AppData temp on first run
+    appdata = os.environ.get("LOCALAPPDATA", "")
+    if appdata:
+        candidates.append(os.path.join(appdata, "Strata", "app", *parts))
+
     for path in candidates:
         if os.path.exists(path):
             return path
-    return candidates[0]
+
+    return candidates[0] if candidates else os.path.join(*parts)
 
 
 # ── 2. Find a free port ───────────────────────────────────────────────────────
@@ -134,9 +165,14 @@ def get_data_dir():
 # ── 5. Set env vars before importing app ─────────────────────────────────────
 os.environ["UNIVERSAL_SEARCH_DATA"] = get_data_dir()
 
-# PyInstaller bundles app.py inside _MEIPASS
+# PyInstaller: app.py is inside _MEIPASS
 if hasattr(sys, "_MEIPASS"):
     sys.path.insert(0, sys._MEIPASS)
+
+# Nuitka: app.py is compiled in, but we add exe dir as fallback
+exe_dir = os.path.dirname(os.path.abspath(sys.executable))
+if exe_dir not in sys.path:
+    sys.path.insert(0, exe_dir)
 
 
 # ── 6. Import the API ─────────────────────────────────────────────────────────
@@ -159,9 +195,29 @@ def main():
     data_dir     = os.environ["UNIVERSAL_SEARCH_DATA"]
     template_dir = resource_path("templates")
 
+    # Nuitka fallback — search for templates folder if resource_path missed
+    if not os.path.exists(template_dir):
+        import tempfile
+        search_roots = [
+            os.path.dirname(os.path.abspath(sys.executable)),
+            os.path.dirname(os.path.abspath(sys.argv[0])),
+            tempfile.gettempdir(),
+        ]
+        for root_dir in search_roots:
+            candidate = os.path.join(root_dir, "templates")
+            if os.path.exists(os.path.join(candidate, "index.html")):
+                template_dir = candidate
+                break
+            # Also check one level deeper (Nuitka extraction patterns)
+            for sub in os.listdir(root_dir) if os.path.isdir(root_dir) else []:
+                candidate = os.path.join(root_dir, sub, "templates")
+                if os.path.exists(os.path.join(candidate, "index.html")):
+                    template_dir = candidate
+                    break
+
     if not os.path.exists(template_dir):
         show_error("Strata — Startup Error",
-            f"Could not find application files.\n\nExpected: {template_dir}\n\nPlease reinstall Strata.")
+            f"Could not find application files.\n\nSearched: {template_dir}\n\nPlease reinstall Strata.")
         sys.exit(1)
 
     # Start local HTTP server so Edge can load the HTML without file:// issues
