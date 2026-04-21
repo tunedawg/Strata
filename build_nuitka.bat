@@ -85,8 +85,6 @@ echo.
   --include-package=http ^
   --include-package=urllib ^
   --include-package=json ^
-  --include-package=clr ^
-  --include-package=pythonnet ^
   --include-package=comtypes ^
   ^
   --nofollow-import-to=tkinter ^
