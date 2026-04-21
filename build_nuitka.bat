@@ -105,6 +105,7 @@ echo.
   --nofollow-import-to=IPython ^
   --nofollow-import-to=jupyter ^
   ^
+  --disable-plugin=pywebview ^
   --assume-yes-for-downloads ^
   "%ROOT%\launcher.py"
 

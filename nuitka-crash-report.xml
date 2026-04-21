@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf8'?>
 <nuitka-compilation-report nuitka_version="4.0.8" nuitka_commercial_version="not installed" mode="onefile" completion="error exit message (1)" exit_message="pywebview: Conflict between user and plugin decision for module 'webview.platforms.cef'.">
   <performance>
-    <memory_usage name="after_launch" value="35913728" />
+    <memory_usage name="after_launch" value="35766272" />
   </performance>
   <data_file name="templates\index.html" source="${cwd}\templates\index.html" size="46543" reason="specified data dir 'C:\universal-search\templates' on command line" tags="user,copy,data-dir-contents" />
   <data_file name="templates\production.html" source="${cwd}\templates\production.html" size="40967" reason="specified data dir 'C:\universal-search\templates' on command line" tags="user,copy,data-dir-contents" />
